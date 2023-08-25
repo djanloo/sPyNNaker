@@ -39,7 +39,7 @@ echoline() {
 dosetupinstall() {
     DIR=$1
     if [ -f "$DIR/setup.py" ]; then
-        echo "Setting up $DIR"
+        pecho "Setting up $DIR"
         (cd $DIR; pip install . > /tmp/last_setup.tmp 2>&1 )
         LAST_ERROR=$?
         if [ $LAST_ERROR -ne 0 ]; then
@@ -48,12 +48,12 @@ dosetupinstall() {
             exit $LAST_ERROR
         fi
     else
-        echo "Skipping setting up $DIR as no setup.py found"
+        pecho "Skipping setting up $DIR as no setup.py found"
 
 ## COPIED FROM setup.bash
 domvn() {
     DIR=$1 tags
-    echo "Building $DIR"
+    pecho "Building $DIR"
     ${MAVEN} -f $DIR package -Dmaven.test.skip=true &> "$MAKE_LOG_FOLDER/$(basename $DIR).java.txt" 2>&1
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
@@ -69,7 +69,7 @@ domvn() {
 domake() {
     DIR=$1
     GOAL=$2
-    echo "Building $GOAL in $DIR"
+    pecho "Building $GOAL in $DIR"
     make -C $DIR $GOAL &> "$MAKE_LOG_FOLDER/$(basename $DIR).$GOAL.txt" #/tmp/last_make.tmp 2>&1
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
@@ -262,11 +262,13 @@ echo
 mvn -version
 echo
 
-# update_java ## Not always necessary: save time
-
-pwarn Java and Maven have not been updated
-pecho Setting MAVEN=mvn
-MAVEN="mvn"
+if [ "$UPDATE_JAVA" = true ] ; then
+    pecho Updating JAVA...
+    update_java
+else
+    pwarn Java and Maven have not been updated
+    pecho Setting MAVEN=mvn
+    MAVEN="mvn"
 
 
 echoline INSTALLATION OF COMPILED STUFF
