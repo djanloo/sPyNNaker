@@ -9,8 +9,8 @@
 # My necessity is to apply minor (really, really small) edits on the C code of neuron dynamics
 
 # Installation options
-UPDATE_JAVA=false
-CLONE_NIGHTLY=false
+UPGRADE_JAVA=false
+CLONE_NIGHTLY=false #TODO
 
 # the_world_is_flat=true
 # # ...do something interesting...
@@ -97,9 +97,9 @@ clean_downloads() {
     rm JavaSpiNNaker -R -f
 }
 
-update_java() {
-    # Updates Java to a stable version (tested: 13)
-    # Updates Maven to a stable version (tested 3.6.3)
+upgrade_java() {
+    # Upgrades Java to a stable version (tested: 13)
+    # Upgrades Maven to a stable version (tested 3.6.3)
     mkdir java_stuff
     cd java_stuff
 
@@ -131,7 +131,7 @@ update_java() {
 
     # Check after install
     echo
-    pecho AFTER update of java and maven:
+    pecho AFTER upgrade of java and maven:
     echo
     java -version
     echo
@@ -173,17 +173,17 @@ rm sPyNNaker -R -f
 # Substitute my version
 cp -R $INITDIR ./
 
-## Update pip and other packages
+## Upgrade pip and other packages
 pip install packaging
 pip -V
 
-## Not needed anymore due to 17-JUL-23 update
+## Not needed anymore due to 17-JUL-23 upgrade
 # pip install --upgrade pip setuptools wheel
 
 ### CLONING REPOS
 # These are mine
 # git clone https://github.com/djanloo/SpiNNUtils.git
-pwarn Repos were not updated
+pwarn Repos were not upgraded
 
 echo
 pecho ended cloning stage at $(date)
@@ -255,18 +255,18 @@ domake SpiNNFrontEndCommon/c_common/ install
 
 # Check java and maven versions
 echo
-pecho BEFORE update of java and maven:
+pecho BEFORE upgrade of java and maven:
 echo
 java -version
 echo
 mvn -version
 echo
 
-if [ "$UPDATE_JAVA" = true ] ; then
+if [ "$UPGRADE_JAVA" = true ] ; then
     pecho Updating JAVA...
-    update_java
+    upgrade_java
 else
-    pwarn Java and Maven have not been updated
+    pwarn Java and Maven have not been upgraded
     pecho Setting MAVEN=mvn
     MAVEN="mvn"
 fi
@@ -291,14 +291,14 @@ dosetupinstall sPyNNaker
 dosetupinstall sPyNNaker8
 rm sPyNNaker8 -R -f
 
-dosetupinstall SpiNNakerGraphFrontEnd
-rm SpiNNakerGraphFrontEnd -R -f
+# dosetupinstall SpiNNakerGraphFrontEnd
+# rm SpiNNakerGraphFrontEnd -R -f
 
-# Makes the project
-domvn JavaSpiNNaker
-# mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
-echo done maven
-echo
+# # Makes the project
+# domvn JavaSpiNNaker
+# # mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
+# echo done maven
+# echo
 
 
 pecho linking PyNN...
