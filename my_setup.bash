@@ -9,7 +9,7 @@
 # My necessity is to apply minor (really, really small) edits on the C code of neuron dynamics
 
 # Installation options
-UPDATE_JAVA=true
+UPDATE_JAVA=false
 CLONE_NIGHTLY=false
 
 # the_world_is_flat=true
