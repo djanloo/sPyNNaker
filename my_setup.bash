@@ -168,7 +168,7 @@ pip -V
 ### CLONING REPOS
 # These are mine
 # git clone https://github.com/djanloo/SpiNNUtils.git
-pecho WARNING: repos were not updated
+pwarn Repos were not updated
 
 echo
 pecho ended cloning stage at $(date)
@@ -234,7 +234,7 @@ fi
 wait
 
 domake SpiNNFrontEndCommon/c_common/front_end_common_lib install-clean
-domake SpiNNFrontEndCommon/c_common/ cleanpecho generating check for file download in ${REPODIR}
+domake SpiNNFrontEndCommon/c_common/ clean
 domake SpiNNFrontEndCommon/c_common/
 domake SpiNNFrontEndCommon/c_common/ install
 
