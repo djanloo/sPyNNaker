@@ -11,7 +11,7 @@
 # Installation options
 UPGRADE_JAVA=false
 CLONE_NIGHTLY=false #TODO: upgrade to latest versions of everything
-BUILD_EDITED=false # Whether to build the default sPyNNaker or the edited one
+BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
 
 ##################### UTILS #####################
 # Echo with current position
