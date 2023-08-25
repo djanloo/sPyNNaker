@@ -3,14 +3,19 @@
 #AUTHOR: djanloo
 #VERSION: 2.0
 
-## This is a modified version of setup.bash provided by the platform around april-2023
-## UPDATE: after a major upgrade of the default software of the container, happened in JUL-2023,
-## it is not necessary anymore to clone repos
-
+# DESCRIPTION: this is an attempt to reproduce the << super easy >> developer installation chain 
+# described at http://spinnakermanchester.github.io/development/devenv.html
+#
+# My necessity is to apply minor (really, really small) edits on the C code of neuron dynamics
 
 # Echo with current position
 pecho() {
     echo -e "\e[34m$(pwd)\e[97m>> " $@
+}
+
+# Warning with current position
+pwarn() {
+    echo -e  "\e[34m$(pwd)\e[97m>> \e[31mWARNING\e[97m:" $@
 }
 
 # Prints a line
@@ -36,7 +41,7 @@ dosetupinstall() {
 
 ## COPIED FROM setup.bash
 domvn() {
-    DIR=$1
+    DIR=$1 tags
     echo "Building $DIR"
     ${MAVEN} -f $DIR package -Dmaven.test.skip=true &> "$MAKE_LOG_FOLDER/$(basename $DIR).java.txt" 2>&1
     LAST_ERROR=$?
@@ -48,7 +53,6 @@ domvn() {
 }
  fi
 }
-
 
 ## COPIED FROM setup.bash
 domake() {
@@ -135,7 +139,7 @@ export C_LOGS_DICT=$(pwd)/LOGS/logs.sqlite3
 export MAKE_LOG_FOLDER=${PWD}/LOGS
 
 pecho Started installation routine by djanloo
-pecho Environment variables: MAVEN=${MAVEN}, INITDIR=${REPODIR}, MAKE_LOG_FOLDER=${MAKE_LOG_FOLDER}, C_LOGS_DICT=${C_LOGS_DICT}
+pecho Environment variables: MAVEN=${MAVEN}, INITDIR=${INITDIR}, MAKE_LOG_FOLDER=${MAKE_LOG_FOLDER}, C_LOGS_DICT=${C_LOGS_DICT}
 
 pecho Retrieving configuration files
 mkdir ../config_files
@@ -230,7 +234,7 @@ fi
 wait
 
 domake SpiNNFrontEndCommon/c_common/front_end_common_lib install-clean
-domake SpiNNFrontEndCommon/c_common/ clean
+domake SpiNNFrontEndCommon/c_common/ cleanpecho generating check for file download in ${REPODIR}
 domake SpiNNFrontEndCommon/c_common/
 domake SpiNNFrontEndCommon/c_common/ install
 
@@ -245,7 +249,7 @@ echo
 
 # update_java ## Not always necessary: save time
 
-pecho WARNING: Java and Maven have not been updated
+pwarn Java and Maven have not been updated
 pecho Setting MAVEN=mvn
 MAVEN="mvn"
 
@@ -309,9 +313,6 @@ mv sPyNNaker/simulation.py ./
 
 pecho generating check for file download in ${INITDIR}
 touch check_files_download.txt
-
-pecho generating check for file download in ${REPODIR}
-touch check_files_download_repo.txt
 
 echoline SIMULATION
 pecho Simulating...
