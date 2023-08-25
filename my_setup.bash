@@ -10,7 +10,8 @@
 
 # Installation options
 UPGRADE_JAVA=false
-CLONE_NIGHTLY=false #TODO
+CLONE_NIGHTLY=false #TODO: upgrade to latest versions of everything
+BUILD_EDITED=false # Whether to build the default sPyNNaker or the edited one
 
 ##################### UTILS #####################
 # Echo with current position
@@ -153,15 +154,23 @@ printenv > ${INITDIR}/env_var.txt
 
 # Move where the repos are
 cd $VIRTUAL_ENV
-# Delete the current version
-rm sPyNNaker -R -f
-# Substitute my version
-pecho Copying modified sPyNNaker package
-cp -R $INITDIR ./
+
+# If it doesn't work with the default
+# then what am I trying to do?
+if [ "$BUILD_EDITED" = true ] ; then
+    # Delete the current version
+    pecho Removing default sPyNNaker package
+    rm sPyNNaker -R -f
+    # Substitute my version
+    pecho Copying modified sPyNNaker package
+    cp -R $INITDIR ./
+else
+    pwarn Default sPyNNaker package will be used in the installation
+fi
 
 ## Upgrade pip and other packages (is it necessary?)
-pip install packaging
-pip -V
+# pip install packaging
+# pip -V
 
 ## Not needed anymore due to 17-JUL-23 upgrade
 # pip install --upgrade pip setuptools wheel
