@@ -269,7 +269,7 @@ else
     pwarn Java and Maven have not been updated
     pecho Setting MAVEN=mvn
     MAVEN="mvn"
-
+fi
 
 echoline INSTALLATION OF COMPILED STUFF
 pecho "starting setup stage for compiled stuff"
