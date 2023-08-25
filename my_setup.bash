@@ -12,13 +12,7 @@
 UPGRADE_JAVA=false
 CLONE_NIGHTLY=false #TODO
 
-# the_world_is_flat=true
-# # ...do something interesting...
-# if [ "$the_world_is_flat" = true ] ; then
-#     echo 'Be careful not to fall off!'
-# fi
-
-
+##################### UTILS #####################
 # Echo with current position
 pecho() {
     echo -e "\e[34m$(pwd)\e[97m>> " $@
@@ -49,7 +43,8 @@ dosetupinstall() {
         fi
     else
         pecho "Skipping setting up $DIR as no setup.py found"
-
+    fi
+}
 ## COPIED FROM setup.bash
 domvn() {
     DIR=$1 tags
@@ -128,7 +123,9 @@ upgrade_java() {
     MAVEN="$MAVEN_HOME/bin/mvn"
     cd ..
 }
-############# Some preliminaries ############
+
+
+##################### Some preliminaries #####################
 export INITDIR=$(pwd)
 
 # Edit where to place logs
@@ -152,8 +149,7 @@ pip freeze > pipfreeze.txt
 pecho Exporting environment variables to ${INITDIR}/env_var.txt
 printenv > ${INITDIR}/env_var.txt
 
-# Now I try to reconstruct what they did one their own version
-# of setup.bash
+##################### SETUP #####################
 
 # Move where the repos are
 cd $VIRTUAL_ENV
@@ -163,7 +159,7 @@ rm sPyNNaker -R -f
 pecho Copying modified sPyNNaker package
 cp -R $INITDIR ./
 
-## Upgrade pip and other packages
+## Upgrade pip and other packages (is it necessary?)
 pip install packaging
 pip -V
 
@@ -174,16 +170,14 @@ pip -V
 # These are mine
 # git clone https://github.com/djanloo/SpiNNUtils.git
 pwarn Repos were not upgraded
-
-echo
-pecho ended cloning stage at $(date)
-pecho listing files:
+pecho Ended cloning stage at $(date)
+pecho Listing files:
 ls -al
 echo
 echoline INSTALL NON-COMPILED STUFF
-pecho starting make stage at $(date)
+pecho Starting make stage at $(date)
 echo
-pecho installing non-compiled stuff before
+pecho Installing non-compiled stuff before
 
 dosetupinstall SpiNNUtils
 rm SpiNNUtils -R -f
@@ -196,6 +190,7 @@ rm SpiNNMachine -R -f
 dosetupinstall SpiNNStorageHandlers
 rm SpiNNStorageHandlers -R -f
 
+# Probably not needed for versions >= 1!6.0.0
 dosetupinstall DataSpecification
 rm DataSpecification -R -f
 
