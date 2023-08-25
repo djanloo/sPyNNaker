@@ -145,7 +145,9 @@ pecho Retrieving configuration files
 mkdir ../config_files
 cp $(<config_files_list.txt) ../config_files
 
-
+pecho Remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
+pecho Result of pip freeze:
+pip freeze
 # Now I try to reconstruct what they did one their own version
 # of setup.bash
 
@@ -155,8 +157,6 @@ cd /home/spinnaker/spinnaker
 rm sPyNNaker -R -f
 # Substitute my version
 cp -R $INITDIR ./
-
-pecho remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
 
 ## Update pip and other packages
 pip install packaging
