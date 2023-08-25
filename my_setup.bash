@@ -178,15 +178,13 @@ fi
 ### CLONING REPOS
 # These are mine
 # git clone https://github.com/djanloo/SpiNNUtils.git
+echline CLONING
 pwarn Repos were not upgraded
 pecho Ended cloning stage at $(date)
 pecho Listing files:
 ls -al
 echo
 echoline INSTALL NON-COMPILED STUFF
-pecho Starting make stage at $(date)
-echo
-pecho Installing non-compiled stuff before
 
 dosetupinstall SpiNNUtils
 rm SpiNNUtils -R -f
@@ -296,11 +294,6 @@ rm sPyNNaker8 -R -f
 
 pecho Linking PyNN...
 python -m spynnaker.pyNN.setup_pynn
-
-# Done because spike_source_poisson was missing
-pecho Adding PyNN model_binaries to PATH 
-PATH="$VIRTUAL_ENV/sPyNNaker/spynnaker/pyNN/model_binaries:$PATH"
-export PATH
 
 LAST_ERROR=$?
 if [ $LAST_ERROR -ne 0 ]; then
