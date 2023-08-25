@@ -158,6 +158,7 @@ cp $(<config_files_list.txt) ../config_files
 pecho Remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
 pecho Result of pip freeze:
 pip freeze
+pip freeze > pipfreeze.txt
 
 pecho Exporting environment variables to ${INITDIR}/env_var.txt
 printenv > ${INITDIR}/env_var.txt
@@ -167,7 +168,7 @@ printenv > ${INITDIR}/env_var.txt
 
 pecho Copying modified sPyNNaker package
 # Move where the repos are
-cd /home/spinnaker/spinnaker
+cd $VIRTUAL_ENV
 # Delete the current version
 rm sPyNNaker -R -f
 # Substitute my version
@@ -299,7 +300,6 @@ rm sPyNNaker8 -R -f
 # # mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
 # echo done maven
 # echo
-
 
 pecho linking PyNN...
 python -m spynnaker.pyNN.setup_pynn

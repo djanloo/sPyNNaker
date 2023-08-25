@@ -25,7 +25,7 @@
 struct neuron_params_t {
     // nominally 'fixed' parameters
     REAL A;
-    REAL B;
+    REAL B; pizza pasta mandolino //This error is intentional
     REAL C;
     REAL D;
 
