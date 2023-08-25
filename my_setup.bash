@@ -298,15 +298,6 @@ domvn JavaSpiNNaker
 echo done maven
 echo
 
-# # Install spyNNaker
-## WARNING: this part is not clear
-# cd $INITDIR
-# echo
-# pecho Now installing sPyNNaker... 
-
-# cd sPyNNaker
-# pip install .
-# cd ..
 
 pecho linking PyNN...
 python -m spynnaker.pyNN.setup_pynn
