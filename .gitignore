@@ -1,3 +1,6 @@
+# Djanloo
+/job*
+# Default
 /.project
 /.pydevproject
 /.idea

@@ -294,9 +294,13 @@ rm sPyNNaker8 -R -f
 # echo done maven
 # echo
 
-pecho linking PyNN...
+pecho Linking PyNN...
 python -m spynnaker.pyNN.setup_pynn
-echo
+
+# Done because spike_source_poisson was missing
+pecho Adding PyNN model_binaries to PATH 
+PATH="$VIRTUAL_ENV/sPyNNaker/spynnaker/pyNN/model_binaries:$PATH"
+export PATH
 
 LAST_ERROR=$?
 if [ $LAST_ERROR -ne 0 ]; then
