@@ -8,6 +8,17 @@
 #
 # My necessity is to apply minor (really, really small) edits on the C code of neuron dynamics
 
+# Installation options
+UPDATE_JAVA=true
+CLONE_NIGHTLY=false
+
+# the_world_is_flat=true
+# # ...do something interesting...
+# if [ "$the_world_is_flat" = true ] ; then
+#     echo 'Be careful not to fall off!'
+# fi
+
+
 # Echo with current position
 pecho() {
     echo -e "\e[34m$(pwd)\e[97m>> " $@
@@ -139,7 +150,6 @@ export C_LOGS_DICT=$(pwd)/LOGS/logs.sqlite3
 export MAKE_LOG_FOLDER=${PWD}/LOGS
 
 pecho Started installation routine by djanloo
-pecho Environment variables: MAVEN=${MAVEN}, INITDIR=${INITDIR}, MAKE_LOG_FOLDER=${MAKE_LOG_FOLDER}, C_LOGS_DICT=${C_LOGS_DICT}
 
 pecho Retrieving configuration files
 mkdir ../config_files
@@ -148,9 +158,14 @@ cp $(<config_files_list.txt) ../config_files
 pecho Remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
 pecho Result of pip freeze:
 pip freeze
+
+pecho Exporting environment variables to ${INITDIR}/env_var.txt
+printenv > ${INITDIR}/env_var.txt
+
 # Now I try to reconstruct what they did one their own version
 # of setup.bash
 
+pecho Copying modified sPyNNaker package
 # Move where the repos are
 cd /home/spinnaker/spinnaker
 # Delete the current version
