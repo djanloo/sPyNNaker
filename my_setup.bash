@@ -62,8 +62,6 @@ domvn() {
         exit $LAST_ERROR
     fi
 }
- fi
-}
 
 ## COPIED FROM setup.bash
 domake() {
@@ -128,15 +126,6 @@ upgrade_java() {
     export PATH
 
     MAVEN="$MAVEN_HOME/bin/mvn"
-
-    # Check after install
-    echo
-    pecho AFTER upgrade of java and maven:
-    echo
-    java -version
-    echo
-    ${MAVEN} -version
-    echo
     cd ..
 }
 ############# Some preliminaries ############
@@ -166,12 +155,12 @@ printenv > ${INITDIR}/env_var.txt
 # Now I try to reconstruct what they did one their own version
 # of setup.bash
 
-pecho Copying modified sPyNNaker package
 # Move where the repos are
 cd $VIRTUAL_ENV
 # Delete the current version
 rm sPyNNaker -R -f
 # Substitute my version
+pecho Copying modified sPyNNaker package
 cp -R $INITDIR ./
 
 ## Upgrade pip and other packages
@@ -254,18 +243,17 @@ domake SpiNNFrontEndCommon/c_common/ clean
 domake SpiNNFrontEndCommon/c_common/
 domake SpiNNFrontEndCommon/c_common/ install
 
-# Check java and maven versions
-echo
-pecho BEFORE upgrade of java and maven:
-echo
-java -version
-echo
-mvn -version
-echo
 
 if [ "$UPGRADE_JAVA" = true ] ; then
     pecho Updating JAVA...
+    # Check java and maven versions
+    pecho BEFORE upgrade of java and maven:
+    java -version
+    mvn -version
     upgrade_java
+    pecho AFTER upgrade of java and maven:
+    java -version
+    ${MAVEN} -version
 else
     pwarn Java and Maven have not been upgraded
     pecho Setting MAVEN=mvn
@@ -292,6 +280,7 @@ dosetupinstall sPyNNaker
 dosetupinstall sPyNNaker8
 rm sPyNNaker8 -R -f
 
+## NOTE: these two are not required for my purposes
 # dosetupinstall SpiNNakerGraphFrontEnd
 # rm SpiNNakerGraphFrontEnd -R -f
 
