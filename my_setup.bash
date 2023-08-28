@@ -53,9 +53,6 @@ gitclone () {
     cd ..
 }
 
-# -e git+https://github.com/SpiNNakerManchester/sPyNNakerVisualisers.git@9e998851f993d139765e848fe0775e525771f2fd#egg=sPyNNaker_visualisers
-
-
 ##################### UTILS #####################
 # Echo with current position
 pecho() {
@@ -208,7 +205,9 @@ printenv > ${INITDIR}/env_var.txt
 # Move where the repos are
 cd $VIRTUAL_ENV
 mkdir AUX_INSTALL
+export AUX_INSTALL_FOLDER=$VIRTUAL_ENV/AUX_INSTALL
 cd AUX_INSTALL
+
 # If it doesn't work with the default
 # then what am I trying to do?
 if [ "$BUILD_EDITED" = true ] ; then
@@ -247,7 +246,8 @@ echoline CLONING
 if [ "$CLONE_STABLES" = true ] ; then
     gitclone spinnaker_tools &
     gitclone spinn_common &
-    gitclone SpiNNutils $SPINNUTILS_S &
+    # gitclone SpiNNutils $SPINNUTILS_S &
+    git clone https://github.com/djanloo/SpiNNUtils.git
     gitclone SpiNNMan $SPINNMAN_V &
     gitclone PACMAN $PACMAN_V &
     gitclone spalloc $SPALLOC_V &
@@ -264,6 +264,8 @@ echo
 echoline INSTALL NON-COMPILED STUFF
 
 dosetupinstall SpiNNutils
+dosetupinstall SpiNNUtils
+
 wait
 dosetupinstall SpiNNMachine
 wait
@@ -274,8 +276,8 @@ echo
 # Build the C Code
 echoline COMPILATION
 
-export SPINN_DIRS=${PWD}/spinnaker_tools
-export NEURAL_MODELLING_DIRS=${PWD}/sPyNNaker/neural_modelling
+export SPINN_DIRS=$AUX_INSTALL_FOLDER/spinnaker_tools
+export NEURAL_MODELLING_DIRS=$AUX_INSTALL_FOLDER/sPyNNaker/neural_modelling
 domake $SPINN_DIRS clean
 domake $SPINN_DIRS
 pecho SPINN_DIRS was set to $SPINN_DIRS
