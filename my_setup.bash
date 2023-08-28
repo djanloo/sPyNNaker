@@ -10,18 +10,27 @@
 
 # Installation options
 UPGRADE_JAVA=false
+DELETE_OLD=false
 CLONE_STABLES=true
-EXIT_LOCAL=false
 BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
 
 # Versions (this is a desperate attempt to match the remote setup)
 
-SPALLOC_V='d7bd5cd758438bab3c3f74f21aa6da073cd47033'
-PACMAN_V='437160765f1ff2ee579a82b6ec79a88789e3d2b4'
-SPINNFRONTENDCOMMON_V='1f3e229c10667d6919526d570020064810a8fa5f'
-SPINNMACHINE_V='bc2225e2ae37bf25d38bc1799b75f2ac84e86bc8'
-SPINNMAN_V='5afe0e3cec9ee50adc44cf2f3e322e6eab9508ef'
-SPINNUTILS_V='2ff6b301ba601a0838d1cdb61dc43f2cba7671ad'
+# SPALLOC_V='d7bd5cd758438bab3c3f74f21aa6da073cd47033'
+# PACMAN_V='437160765f1ff2ee579a82b6ec79a88789e3d2b4'
+# SPINNFRONTENDCOMMON_V='1f3e229c10667d6919526d570020064810a8fa5f'
+# SPINNMACHINE_V='bc2225e2ae37bf25d38bc1799b75f2ac84e86bc8'
+# SPINNMAN_V='5afe0e3cec9ee50adc44cf2f3e322e6eab9508ef'
+# SPINNUTILS_V='2ff6b301ba601a0838d1cdb61dc43f2cba7671ad'
+
+
+SPALLOC_V='master'
+PACMAN_V='master'
+SPINNFRONTENDCOMMON_V='master'
+SPINNMACHINE_V='master'
+SPINNMAN_V='master'
+SPINNUTILS_V='master'
+
 
 gitclone () {
     REPO=$1
@@ -30,7 +39,7 @@ gitclone () {
         pecho Repo $REPO not cloned since it already exists
     else
         pecho cloning $REPO
-        git clone git@github.com:SpiNNakerManchester/$REPO.git --branch master --single-branch
+        git clone git@github.com:SpiNNakerManchester/$REPO.git --branch master --single-branch &> /tmp/last_gitclone.txt
     fi
     
     cd $REPO
@@ -61,15 +70,11 @@ pwarn() {
 # Prints a line
 echoline() {
     TITLE=$@
-    printf '%.0s-' {1..50};printf "\e[41m$TITLE\e[49m";printf '%.0s-' {1..50};printf '\n'
+    printf '%.0s-' {1..50};printf "\e[41m$TITLE $(date +"%H:%M")\e[49m";printf '%.0s-' {1..50};printf '\n'
 }
 
 exit_env () {
-    if [ "$EXIT_LOCAL" = true ] ; then
-    pwarn INSTALLATION FAILED
-else
-    exit $1
-fi
+    exit $?
 }
 
 
@@ -87,6 +92,7 @@ dosetupinstall() {
         fi
     else
         pecho "Skipping setting up $DIR as no setup.py found"
+        ls -al $DIR
     fi
 }
 ## COPIED FROM setup.bash
@@ -176,7 +182,11 @@ export INITDIR=$(pwd)
 # Avoiding this can cause errors
 mkdir LOGS
 chmod 777 LOGS
+
 export C_LOGS_DICT=$(pwd)/LOGS/logs.sqlite3
+touch $C_LOGS_DICT
+chmod 777 $C_LOGS_DICT
+
 export MAKE_LOG_FOLDER=${PWD}/LOGS
 
 pecho Started installation routine by djanloo
@@ -224,9 +234,21 @@ fi
 ##################### CLONING ###################
 
 
+if [ "$DELETE_OLD" = true ] ; then
+    pwarn DELETE_OLD is set to true: deleting all folders..
+    clean_downloads
+    pecho now listing files:
+    ls -al
+fi
+
+
 echoline CLONING
 if [ "$CLONE_STABLES" = true ] ; then
+    gitclone spinnaker_tools
+    gitclone spinn_common
     gitclone SpiNNutils $SPINNUTILS_S
+    gitclone SpiNNStorageHandlers
+    gitclone DataSpecification
     gitclone SpiNNMan $SPINNMAN_V
     gitclone PACMAN $PACMAN_V
     gitclone spalloc $SPALLOC_V
@@ -242,23 +264,13 @@ ls -al
 echo
 echoline INSTALL NON-COMPILED STUFF
 
-dosetupinstall SpiNNUtils
-rm SpiNNUtils -R -f
-
+dosetupinstall SpiNNutils
 wait
-
 dosetupinstall SpiNNMachine
-rm SpiNNMachine -R -f
-
+wait
 dosetupinstall SpiNNStorageHandlers
-rm SpiNNStorageHandlers -R -f
-
-# Probably not needed for versions >= 1!6.0.0
 dosetupinstall DataSpecification
-rm DataSpecification -R -f
-
 dosetupinstall PACMAN
-rm PACMAN -R -f
 
 echo
 
