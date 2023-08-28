@@ -10,8 +10,42 @@
 
 # Installation options
 UPGRADE_JAVA=false
-CLONE_NIGHTLY=false #TODO: upgrade to latest versions of everything
+CLONE_STABLES=true
+EXIT_LOCAL=false
 BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
+
+# Versions (this is a desperate attempt to match the remote setup)
+
+SPALLOC_V='d7bd5cd758438bab3c3f74f21aa6da073cd47033'
+PACMAN_V='437160765f1ff2ee579a82b6ec79a88789e3d2b4'
+SPINNFRONTENDCOMMON_V='1f3e229c10667d6919526d570020064810a8fa5f'
+SPINNMACHINE_V='bc2225e2ae37bf25d38bc1799b75f2ac84e86bc8'
+SPINNMAN_V='5afe0e3cec9ee50adc44cf2f3e322e6eab9508ef'
+SPINNUTILS_V='2ff6b301ba601a0838d1cdb61dc43f2cba7671ad'
+
+gitclone () {
+    REPO=$1
+    VERSION=$2
+    if [ -d "$REPO" ]; then
+        pecho Repo $REPO not cloned since it already exists
+    else
+        pecho cloning $REPO
+        git clone git@github.com:SpiNNakerManchester/$REPO.git --branch master --single-branch
+    fi
+    
+    cd $REPO
+    pecho checking out $REPO to version $VERSION
+    git checkout $VERSION
+    LAST_ERROR=$?
+    if [ $LAST_ERROR -ne 0 ]; then
+            echo "$LAST_ERROR" > $INITDIR/last_error.txt
+            exit_env $LAST_ERROR
+        fi
+    cd ..
+}
+
+# -e git+https://github.com/SpiNNakerManchester/sPyNNakerVisualisers.git@9e998851f993d139765e848fe0775e525771f2fd#egg=sPyNNaker_visualisers
+
 
 ##################### UTILS #####################
 # Echo with current position
@@ -30,17 +64,26 @@ echoline() {
     printf '%.0s-' {1..50};printf "\e[41m$TITLE\e[49m";printf '%.0s-' {1..50};printf '\n'
 }
 
+exit_env () {
+    if [ "$EXIT_LOCAL" = true ] ; then
+    pwarn INSTALLATION FAILED
+else
+    exit $1
+fi
+}
+
+
 ## COPIED FROM setup.bash
 dosetupinstall() {
     DIR=$1
     if [ -f "$DIR/setup.py" ]; then
         pecho "Setting up $DIR"
-        (cd $DIR; pip install . > /tmp/last_setup.tmp 2>&1 )
+        (cd $DIR; python setup.py install > /tmp/last_setup.tmp 2>&1 )
         LAST_ERROR=$?
         if [ $LAST_ERROR -ne 0 ]; then
             cat /tmp/last_setup.tmp
-            clean_downloads
-            exit $LAST_ERROR
+            echo "$LAST_ERROR" > $INITDIR/last_error.txt
+            exit_env $LAST_ERROR
         fi
     else
         pecho "Skipping setting up $DIR as no setup.py found"
@@ -54,8 +97,8 @@ domvn() {
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
         cat "$MAKE_LOG_FOLDER/$(basename $DIR).java.txt"
-        clean_downloads
-        exit $LAST_ERROR
+        echo "$LAST_ERROR" > $INITDIR/last_error.txt
+        exit_env $LAST_ERROR
     fi
 }
 
@@ -68,8 +111,8 @@ domake() {
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
         cat  "$MAKE_LOG_FOLDER/$(basename $DIR).$GOAL.txt"
-        clean_downloads
-        exit $LAST_ERROR
+        echo "$LAST_ERROR" > $INITDIR/last_error.txt
+        exit_env $LAST_ERROR
     fi
 }
 
@@ -178,8 +221,21 @@ fi
 ### CLONING REPOS
 # These are mine
 # git clone https://github.com/djanloo/SpiNNUtils.git
-echline CLONING
-pwarn Repos were not upgraded
+##################### CLONING ###################
+
+
+echoline CLONING
+if [ "$CLONE_STABLES" = true ] ; then
+    gitclone SpiNNutils $SPINNUTILS_S
+    gitclone SpiNNMan $SPINNMAN_V
+    gitclone PACMAN $PACMAN_V
+    gitclone spalloc $SPALLOC_V
+    gitclone SpiNNFrontEndCommon $SPINNFRONTENDCOMMON_V
+    gitclone SpiNNMachine $SPINNMACHINE_V
+else
+    pwarn Repos were not upgraded
+fi
+
 pecho Ended cloning stage at $(date)
 pecho Listing files:
 ls -al
@@ -297,9 +353,9 @@ python -m spynnaker.pyNN.setup_pynn
 
 LAST_ERROR=$?
 if [ $LAST_ERROR -ne 0 ]; then
-    clean_downloads
     echo INSTALLATION FAILED
-    exit $LAST_ERROR
+    echo "$LAST_ERROR" > $INITDIR/last_error.txt
+    exit_env $LAST_ERROR
 fi
 pecho Done installing.
 
