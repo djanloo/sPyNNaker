@@ -205,7 +205,8 @@ printenv > ${INITDIR}/env_var.txt
 
 # Move where the repos are
 cd $VIRTUAL_ENV
-
+mkdir AUX_INSTALL
+cd AUX_INSTALL
 # If it doesn't work with the default
 # then what am I trying to do?
 if [ "$BUILD_EDITED" = true ] ; then
