@@ -39,13 +39,14 @@ gitclone () {
         pecho Repo $REPO not cloned since it already exists
     else
         pecho cloning $REPO
-        git clone git@github.com:SpiNNakerManchester/$REPO.git --branch master --single-branch &> /tmp/last_gitclone.txt 
+        git clone git@github.com:SpiNNakerManchester/$REPO.git --branch master --single-branch #&> /tmp/last_gitclone.txt 
     fi
     cd $REPO
     pecho checking out $REPO to version $VERSION
     git checkout $VERSION
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
+            cat /tmp/last_gitclone.txt
             echo "$LAST_ERROR" > $INITDIR/last_error.txt
             exit_env $LAST_ERROR
         fi
@@ -254,7 +255,6 @@ else
 fi
 wait
 
-pecho Ended cloning stage at $(date)
 pecho Listing files:
 ls -al
 echo
