@@ -10,7 +10,7 @@
 
 # Installation options
 UPGRADE_JAVA=false
-DELETE_OLD=true
+DELETE_OLD=false
 CLONE_STABLES=true
 BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
 
@@ -83,7 +83,9 @@ dosetupinstall() {
     DIR=$1
     if [ -f "$DIR/setup.py" ]; then
         pecho "Setting up $DIR"
-        (cd $DIR; python setup.py install > /tmp/last_setup.tmp 2>&1 )
+        # (cd $DIR; python setup.py install > /tmp/last_setup.tmp 2>&1 )
+        (cd $DIR; pip install . > /tmp/last_setup.tmp 2>&1 )
+
         LAST_ERROR=$?
         if [ $LAST_ERROR -ne 0 ]; then
             cat /tmp/last_setup.tmp
