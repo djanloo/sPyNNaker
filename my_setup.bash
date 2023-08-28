@@ -39,7 +39,7 @@ gitclone () {
         pecho Repo $REPO not cloned since it already exists
     else
         pecho cloning $REPO
-        git clone git@github.com:SpiNNakerManchester/$REPO.git --branch master --single-branch #&> /tmp/last_gitclone.txt 
+        git clone https://github.com/SpiNNakerManchester/$REPO.git --branch master --single-branch #&> /tmp/last_gitclone.txt 
     fi
     cd $REPO
     pecho checking out $REPO to version $VERSION
