@@ -10,7 +10,7 @@
 
 # Installation options
 UPGRADE_JAVA=false
-DELETE_OLD=false
+DELETE_OLD=true
 CLONE_STABLES=true
 BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
 
@@ -39,9 +39,8 @@ gitclone () {
         pecho Repo $REPO not cloned since it already exists
     else
         pecho cloning $REPO
-        git clone git@github.com:SpiNNakerManchester/$REPO.git --branch master --single-branch &> /tmp/last_gitclone.txt
+        git clone git@github.com:SpiNNakerManchester/$REPO.git --branch master --single-branch &> /tmp/last_gitclone.txt 
     fi
-    
     cd $REPO
     pecho checking out $REPO to version $VERSION
     git checkout $VERSION
@@ -125,12 +124,10 @@ domake() {
 clean_downloads() {
     rm spinnaker_tools -R -f
     rm PyNN -R -f
-    rm SpiNNUtils -R -f
+    rm SpiNNutils -R -f
     rm SpiNNMachine -R -f
-    rm SpiNNStorageHandlers -R -f
     rm PACMAN -R -f
     rm SpiNNMan -R -f
-    rm DataSpecification -R -f
     rm spalloc -R -f
     rm spinn_common -R -f
     rm spalloc_server -R -f
@@ -176,6 +173,8 @@ upgrade_java() {
 
 
 ##################### Some preliminaries #####################
+echoline Started installation script by djanloo
+
 export INITDIR=$(pwd)
 
 # Edit where to place logs
@@ -188,8 +187,6 @@ touch $C_LOGS_DICT
 chmod 777 $C_LOGS_DICT
 
 export MAKE_LOG_FOLDER=${PWD}/LOGS
-
-pecho Started installation routine by djanloo
 
 pecho Retrieving configuration files
 mkdir ../config_files
@@ -244,19 +241,18 @@ fi
 
 echoline CLONING
 if [ "$CLONE_STABLES" = true ] ; then
-    gitclone spinnaker_tools
-    gitclone spinn_common
-    gitclone SpiNNutils $SPINNUTILS_S
-    gitclone SpiNNStorageHandlers
-    gitclone DataSpecification
-    gitclone SpiNNMan $SPINNMAN_V
-    gitclone PACMAN $PACMAN_V
-    gitclone spalloc $SPALLOC_V
-    gitclone SpiNNFrontEndCommon $SPINNFRONTENDCOMMON_V
-    gitclone SpiNNMachine $SPINNMACHINE_V
+    gitclone spinnaker_tools &
+    gitclone spinn_common &
+    gitclone SpiNNutils $SPINNUTILS_S &
+    gitclone SpiNNMan $SPINNMAN_V &
+    gitclone PACMAN $PACMAN_V &
+    gitclone spalloc $SPALLOC_V &
+    gitclone SpiNNFrontEndCommon $SPINNFRONTENDCOMMON_V &
+    gitclone SpiNNMachine $SPINNMACHINE_V &
 else
     pwarn Repos were not upgraded
 fi
+wait
 
 pecho Ended cloning stage at $(date)
 pecho Listing files:
@@ -268,8 +264,6 @@ dosetupinstall SpiNNutils
 wait
 dosetupinstall SpiNNMachine
 wait
-dosetupinstall SpiNNStorageHandlers
-dosetupinstall DataSpecification
 dosetupinstall PACMAN
 
 echo
