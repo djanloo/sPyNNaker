@@ -10,7 +10,7 @@
 
 # Installation options
 UPGRADE_JAVA=false
-DELETE_OLD=false
+DELETE_OLD=true
 CLONE_STABLES=true
 BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
 
@@ -40,10 +40,10 @@ gitclone () {
     else
         pecho cloning $REPO
         git clone https://github.com/SpiNNakerManchester/$REPO.git --branch master --single-branch &> /tmp/last_gitclone.txt 
+        cd $REPO
+        pecho checking out $REPO to version $VERSION
+        git checkout $VERSION  
     fi
-    cd $REPO
-    pecho checking out $REPO to version $VERSION
-    git checkout $VERSION
     LAST_ERROR=$?
     if [ $LAST_ERROR -ne 0 ]; then
             cat /tmp/last_gitclone.txt
@@ -61,7 +61,7 @@ pecho() {
 
 # Warning with current position
 pwarn() {
-    echo -e  "\e[34m$(pwd)\e[97m>> \e[31mWARNING\e[97m:" $@
+    echo -e  "\e[34m$(pwd)\e[97m>>  \e[31mWARNING\e[97m:" $@
 }
 
 # Prints a line
@@ -81,7 +81,7 @@ dosetupinstall() {
     if [ -f "$DIR/setup.py" ]; then
         pecho "Setting up $DIR"
         # (cd $DIR; python setup.py install > /tmp/last_setup.tmp 2>&1 )
-        (cd $DIR; pip install . > /tmp/last_setup.tmp 2>&1 )
+        (cd $DIR; pip install .  --no-dependencies > /tmp/last_setup.tmp 2>&1 )
 
         LAST_ERROR=$?
         if [ $LAST_ERROR -ne 0 ]; then
@@ -133,7 +133,7 @@ clean_downloads() {
     rm spinn_common -R -f
     rm spalloc_server -R -f
     rm SpiNNFrontEndCommon -R -f
-    rm sPyNNaker -R -f
+    # rm sPyNNaker -R -f
     rm sPyNNaker8 -R -f
     rm JavaSpiNNaker -R -f
 }
@@ -375,12 +375,14 @@ fi
 pecho Done installing.
 
 ############### CHECK ###############
-cd $INITDIR
-cd ..
-pecho check for installation: listing files
+cd $VIRTUAL_ENV
+echoline INSTALLATION CHECK
+pecho listing files:
+ls -al
 pecho Remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
 pecho Remote spinnutils version: $(python -c "import spinn_utilities; print(spinn_utilities.__version__)")
-
+pecho Result of pip freeze:
+pip freeze
 ############### SIMULATION #############
 cd $INITDIR
 
