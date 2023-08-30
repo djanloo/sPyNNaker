@@ -27,7 +27,7 @@ pprint("[green]Connection done[/green]")
 
 pprint(f"Authorization endpoint: [green]{client.authorization_endpoint}[/green]/login")
 pprint("It may be necessary to grant access visiting this URL by browser [blue]once[/blue]")
-pprint(f"Using the repository [green] {collab_id} [/green] for quotas.\n Starting the job at {time.ctime()}")
+pprint(f"Using the repository [green] {collab_id} [/green] for quotas.\nStarting the job at {time.ctime()}")
 
 job = client.submit_job(source="https://github.com/djanloo/sPyNNaker.git",
                         platform=nmpi.SPINNAKER,

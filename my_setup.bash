@@ -208,6 +208,12 @@ cd $INITDIR
 pecho Installing requirements:
 pip install -r requirements.txt
 cd -
+
+pecho Installing "manual" requirements
+pip install "numpy>=1.13,<1.9999" "scipy>=0.16.0" matplotlib
+pip install "appdirs>=1.4.2,<2.0.0" "pylru>=1" lxml jsonschema sortedcollections futures pytz tzlocal "requests>=2.4.1"
+pip install csa "quantities>=0.12.1" "pynn>=0.9.2,<0.10" "lazyarray>=0.2.9,<=0.4.0" "neo>=0.5.2,< 0.7.0"
+
 ##################### SETUP #####################
 
 # Move where the repos are
@@ -358,14 +364,14 @@ dosetupinstall sPyNNaker8
 rm sPyNNaker8 -R -f
 
 ## NOTE: these two are not required for my purposes
-# dosetupinstall SpiNNakerGraphFrontEnd
-# rm SpiNNakerGraphFrontEnd -R -f
+dosetupinstall SpiNNakerGraphFrontEnd
+rm SpiNNakerGraphFrontEnd -R -f
 
-# # Makes the project
-# domvn JavaSpiNNaker
-# # mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
-# echo done maven
-# echo
+pecho Building JavaSpiNNaker
+# Makes the project
+domvn JavaSpiNNaker
+# mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
+pecho done maven
 
 pecho Linking PyNN...
 python -m spynnaker.pyNN.setup_pynn
