@@ -10,7 +10,7 @@
 
 # Installation options
 UPGRADE_JAVA=false
-DELETE_OLD=true
+DELETE_OLD=false
 CLONE_STABLES=true
 BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
 
@@ -349,6 +349,7 @@ domake sPyNNaker/neural_modelling/ clean
 domake sPyNNaker/neural_modelling/
 dosetupinstall sPyNNaker
 
+# sPyNNaker8 is probably outdated
 dosetupinstall sPyNNaker8
 rm sPyNNaker8 -R -f
 
