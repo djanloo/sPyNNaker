@@ -10,7 +10,7 @@
 
 # Installation options
 UPGRADE_JAVA=false
-DELETE_OLD=false
+DELETE_OLD=true
 CLONE_STABLES=true
 BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
 
@@ -125,6 +125,7 @@ clean_downloads() {
     rm spinnaker_tools -R -f
     rm PyNN -R -f
     rm SpiNNutils -R -f
+    rm SpiNNUtils -R -f
     rm SpiNNMachine -R -f
     rm PACMAN -R -f
     rm SpiNNMan -R -f
@@ -266,7 +267,7 @@ ls -al
 echo
 echoline INSTALL NON-COMPILED STUFF
 
-dosetupinstall SpiNNutils
+# dosetupinstall SpiNNutils
 dosetupinstall SpiNNUtils
 
 wait
@@ -333,7 +334,6 @@ else
 fi
 
 echoline INSTALLATION OF COMPILED STUFF
-pecho "starting setup stage for compiled stuff"
 
  # Setup packages to make sure the right libraries are installed
 dosetupinstall SpiNNMan
@@ -372,6 +372,13 @@ if [ $LAST_ERROR -ne 0 ]; then
     exit_env $LAST_ERROR
 fi
 pecho Done installing.
+
+############### CHECK ###############
+cd $INITDIR
+cd ..
+pecho check for installation: listing files
+pecho Remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
+pecho Remote spinnutils version: $(python -c "import spinn_utilities; print(spinn_utilities.__version__)")
 
 ############### SIMULATION #############
 cd $INITDIR
