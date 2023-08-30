@@ -56,18 +56,18 @@ gitclone () {
 ##################### UTILS #####################
 # Echo with current position
 pecho() {
-    echo -e "\e[34m$(pwd)\e[97m>> " $@
+    echo -e "\e[34m$(pwd)\e[0m>> " $@
 }
 
 # Warning with current position
 pwarn() {
-    echo -e  "\e[34m$(pwd)\e[97m>>  \e[31mWARNING\e[97m:" $@
+    echo -e  "\e[34m$(pwd)\e[0m>>  \e[31mWARNING\e[0m:" $@
 }
 
 # Prints a line
 echoline() {
     TITLE=$@
-    printf '%.0s-' {1..50};printf "\e[41m$TITLE $(date +"%H:%M")\e[49m";printf '%.0s-' {1..50};printf '\n'
+    printf '%.0s-' {1..50};printf "\e[41m$TITLE $(date +"%H:%M")\e[0m";printf '%.0s-' {1..50};printf '\n'
 }
 
 exit_env () {
