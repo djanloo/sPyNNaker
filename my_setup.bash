@@ -376,6 +376,8 @@ if ["$BUILD_JAVASPINNAKER" = true] ; then
     domvn JavaSpiNNaker
     # mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
     pecho done maven
+else
+    pwarn JavaSPiNNaker was not installed
 fi
 
 pecho Linking PyNN...
