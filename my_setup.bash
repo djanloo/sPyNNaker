@@ -10,6 +10,7 @@
 
 # Installation options
 UPGRADE_JAVA=false
+BUILD_JAVASPINNAKER=false
 DELETE_OLD=true
 CLONE_STABLES=true
 BUILD_EDITED=true # Whether to build the default sPyNNaker or the edited one
@@ -191,7 +192,9 @@ export MAKE_LOG_FOLDER=${PWD}/LOGS
 
 pecho Retrieving configuration files
 mkdir ../config_files
-cp $(<config_files_list.txt) ../config_files
+cd $VIRTUAL_ENV
+cp "$(<$INITDIR/config_files_list.txt)" $INITDIR/../config_files
+cd -
 
 cd ..
 pecho Remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
@@ -368,10 +371,12 @@ rm sPyNNaker8 -R -f
 dosetupinstall SpiNNakerGraphFrontEnd
 rm SpiNNakerGraphFrontEnd -R -f
 
-# Makes the project
-domvn JavaSpiNNaker
-# mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
-pecho done maven
+if ["$BUILD_JAVASPINNAKER" = true] ; then
+    # Makes the project
+    domvn JavaSpiNNaker
+    # mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
+    pecho done maven
+fi
 
 pecho Linking PyNN...
 python -m spynnaker.pyNN.setup_pynn
