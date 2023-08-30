@@ -96,7 +96,7 @@ dosetupinstall() {
 }
 ## COPIED FROM setup.bash
 domvn() {
-    DIR=$1 tags
+    DIR=$1
     pecho "Building $DIR"
     ${MAVEN} -f $DIR package -Dmaven.test.skip=true &> "$MAKE_LOG_FOLDER/$(basename $DIR).java.txt" 2>&1
     LAST_ERROR=$?
@@ -367,7 +367,6 @@ rm sPyNNaker8 -R -f
 dosetupinstall SpiNNakerGraphFrontEnd
 rm SpiNNakerGraphFrontEnd -R -f
 
-pecho Building JavaSpiNNaker
 # Makes the project
 domvn JavaSpiNNaker
 # mv JavaSpiNNaker /home/spinnaker/spinnaker3.8/lib/python3.8/ -f
