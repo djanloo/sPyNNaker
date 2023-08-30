@@ -204,6 +204,10 @@ pip freeze > pipfreeze.txt
 pecho Exporting environment variables to ${INITDIR}/env_var.txt
 printenv > ${INITDIR}/env_var.txt
 
+cd $INITDIR
+pecho Installing requirements:
+pip install -r requirements.txt
+cd -
 ##################### SETUP #####################
 
 # Move where the repos are
