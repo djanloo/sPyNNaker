@@ -267,6 +267,7 @@ if [ "$CLONE_STABLES" = true ] ; then
     gitclone spalloc $SPALLOC_V &
     gitclone SpiNNFrontEndCommon $SPINNFRONTENDCOMMON_V &
     gitclone SpiNNMachine $SPINNMACHINE_V &
+    gitclone JavaSpiNNaker &
 else
     pwarn Repos were not upgraded
 fi
