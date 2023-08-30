@@ -13,7 +13,6 @@ jsonschema-specifications==2023.7.1
 kiwisolver==1.4.5
 lazyarray==0.5.2
 markdown-it-py==3.0.0
-matplotlib==3.8.0rc1
 mdurl==0.1.2
 neo==0.12.0
 numpy==1.26.0b1
