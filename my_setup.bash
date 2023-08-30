@@ -192,7 +192,10 @@ pecho Retrieving configuration files
 mkdir ../config_files
 cp $(<config_files_list.txt) ../config_files
 
+cd ..
 pecho Remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
+cd -
+
 pecho Result of pip freeze:
 pip freeze
 pip freeze > pipfreeze.txt
