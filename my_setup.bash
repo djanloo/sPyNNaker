@@ -408,12 +408,13 @@ pecho Result of pip freeze:
 pip freeze
 ############### SIMULATION #############
 cd $INITDIR
+cd ..
 
 mv sPyNNaker/simulation.py ./
 # clean_downloads # in case simulation goes well it does not return all the src anyway
 
 pecho generating check for file download in ${INITDIR}
-touch check_files_download.txt
+touch $INITDIR/check_files_download.txt
 
 echoline SIMULATION
 pecho Simulating...
