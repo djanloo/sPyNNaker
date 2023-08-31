@@ -297,10 +297,15 @@ echoline COMPILATION
 
 export SPINN_DIRS=$AUX_INSTALL_FOLDER/spinnaker_tools
 export NEURAL_MODELLING_DIRS=$AUX_INSTALL_FOLDER/sPyNNaker/neural_modelling
-domake $SPINN_DIRS clean
-domake $SPINN_DIRS
+
 pecho SPINN_DIRS was set to $SPINN_DIRS
 pecho NEURAL_MODELLING_DIRS was set to $NEURAL_MODELLING_DIRS
+
+domake $SPINN_DIRS clean
+domake $SPINN_DIRS
+
+pecho after compiling SPINN_DIRS was set to $SPINN_DIRS
+pecho after compiling NEURAL_MODELLING_DIRS was set to $NEURAL_MODELLING_DIRS
 echo
 
 # Install spinnaker_tools
