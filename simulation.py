@@ -85,5 +85,5 @@ for signal in block.segments[0].analogsignals:
     axv.plot(signal.times, signal.magnitude)
 
 plot_spiketrains(axspike, block.segments[0].spiketrains )
-axspike.set_title(f"Runtime: {runtime:.3f} s")
+axspike.set_title(f"SImulator: {simulator_name}, runtime: {runtime:.3f} s", size=10)
 fig.savefig(f"results_{sim.__name__}.png")
