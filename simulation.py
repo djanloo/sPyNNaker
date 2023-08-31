@@ -8,22 +8,22 @@ import matplotlib.pyplot as plt
 from pyNN.random import NumpyRNG, RandomDistribution
 from pyNN.utility import SimulationProgressBar
 from pyNN.utility.plotting import plot_spiketrains
-import pyNN.spiNNaker as sim
+import pyNN.neuron as sim
 from time import perf_counter
 
-simulation_time = 10
+simulation_time = 50
 excitatory_strength = 0.05
 inhibitory_strength = 1.0
-connection_probability = 0.05
+connection_probability = 0.02
 
-dt = 1
+dt = 0.1
 N = 50
 
 sim.setup(timestep=dt)
 print("setup complete")
 
 # Neurons
-bombing_population = sim.Population(1, sim.SpikeSourcePoisson(rate=500))
+bombing_population = sim.Population(1, sim.SpikeSourcePoisson(rate=300))
 target_population = sim.Population(N, sim.IF_cond_exp())
 calming_population = sim.Population(N//4, sim.IF_cond_exp())
 
@@ -41,7 +41,7 @@ self_connections = sim.Projection(target_population, target_population,
 print("connections 2/4")
 calming_connections = sim.Projection(calming_population, target_population,
                                      sim.AllToAllConnector(),
-                                     sim.StaticSynapse(weight=inhibitory_strength/N, delay=1.2))
+                                     sim.StaticSynapse(weight=inhibitory_strength/N, delay=1.2), receptor_type="inhibitory")
 print("connections 3/4")
 
 calm_stimulating = sim.Projection(   target_population, calming_population,
