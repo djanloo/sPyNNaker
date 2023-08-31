@@ -1,5 +1,7 @@
 # Djanloo
 /job*
+/LOGS
+
 # Default
 /.project
 /.pydevproject
