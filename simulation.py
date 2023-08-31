@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from pyNN.random import NumpyRNG, RandomDistribution
 from pyNN.utility import SimulationProgressBar
 from pyNN.utility.plotting import plot_spiketrains
-import pyNN.neuron as sim
+import pyNN.spiNNaker as sim
 from time import perf_counter
 
 simulation_time = 10
