@@ -212,10 +212,10 @@ pecho Installing requirements:
 pip install -r requirements.txt
 cd -
 
-pecho Installing "manual" requirements
-pip install "numpy>=1.13,<1.9999" "scipy>=0.16.0" matplotlib
-pip install "appdirs>=1.4.2,<2.0.0" "pylru>=1" lxml jsonschema sortedcollections futures pytz tzlocal "requests>=2.4.1"
-pip install csa "quantities>=0.12.1" "pynn>=0.9.2,<0.10" "lazyarray>=0.2.9,<=0.4.0" "neo>=0.5.2,< 0.7.0"
+# pecho Installing "manual" requirements
+# pip install "numpy>=1.13,<1.9999" "scipy>=0.16.0" matplotlib
+# pip install "appdirs>=1.4.2,<2.0.0" "pylru>=1" lxml jsonschema sortedcollections futures pytz tzlocal "requests>=2.4.1"
+# pip install csa "quantities>=0.12.1" "lazyarray>=0.2.9,<=0.4.0" "neo>=0.5.2,< 0.7.0"
 
 
 ##################### SETUP #####################
