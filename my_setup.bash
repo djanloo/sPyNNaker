@@ -295,8 +295,8 @@ echo
 # Build the C Code
 echoline COMPILATION
 
-export SPINN_DIRS=$VIRTUAL_ENV/$AUX_INSTALL_FOLDER/spinnaker_tools
-export NEURAL_MODELLING_DIRS=$VIRTUAL_ENV/$AUX_INSTALL_FOLDER/sPyNNaker/neural_modelling
+export SPINN_DIRS=/spinnaker_tools
+export NEURAL_MODELLING_DIRS=/sPyNNaker/neural_modelling
 
 pecho SPINN_DIRS was set to $SPINN_DIRS
 pecho NEURAL_MODELLING_DIRS was set to $NEURAL_MODELLING_DIRS
