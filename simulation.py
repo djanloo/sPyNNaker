@@ -11,13 +11,28 @@ from pyNN.utility.plotting import plot_spiketrains
 import pyNN.neuron as sim
 from time import perf_counter
 
+from rich import print as pprint
+
+
+import os
+
+simulator=os.environ.get("DJANLOO_NEURAL_SIMULATOR")
+if simulator=="spiNNaker":
+    print("choosing [green]spiNNaker[/green] as simulator")
+    import pyNN.spiNNaker as sim
+
+else:
+    pprint("Choosing [green]neuron[/green] as simulator")
+    import pyNN.neuron as sim
+
+
 simulation_time = 50
 excitatory_strength = 0.05
 inhibitory_strength = 1.0
 connection_probability = 0.02
 
-dt = 0.1
-N = 50
+dt = 1
+N = 500
 
 sim.setup(timestep=dt)
 print("setup complete")
