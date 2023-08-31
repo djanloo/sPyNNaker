@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 from pyNN.random import NumpyRNG, RandomDistribution
 from pyNN.utility import SimulationProgressBar
 from pyNN.utility.plotting import plot_spiketrains
-import pyNN.spiNNaker as sim
+import pyNN.neuron as sim
 from time import perf_counter
 
-simulation_time = 1
+simulation_time = 10
 excitatory_strength = 0.05
 inhibitory_strength = 1.0
 connection_probability = 0.05
@@ -63,8 +63,11 @@ print(f"run time: {runtime}")
 block = target_population.get_data()
 print(f"{len(block.segments)} segments of block found")
 
+
 fig, (axspike, axv) = plt.subplots(2,1, sharex=True)
 for signal in block.segments[0].analogsignals:
+    print(f"data is {signal.times}")
+    print(f"data has length {len(signal.times)}")
     axv.plot(signal.times, signal.magnitude)
 plot_spiketrains(axspike,block.segments[0].spiketrains )
 axspike.set_title(f"Runtime: {runtime:.3f} s")
