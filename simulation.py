@@ -4,7 +4,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-import pyNN.neuron as sim
 from pyNN.utility import SimulationProgressBar
 from pyNN.utility.plotting import plot_spiketrains
 
