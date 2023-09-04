@@ -409,6 +409,7 @@ pecho Remote spinnutils version: $(python -c "import spinn_utilities; print(spin
 pecho Result of pip freeze:
 pip freeze
 ############### SIMULATION #############
+export DJANLOO_NEURAL_SIMULATOR=spiNNaker
 cd $INITDIR
 cd ..
 
