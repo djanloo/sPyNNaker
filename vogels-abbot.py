@@ -15,8 +15,12 @@ from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
-import logging
-from local_utils import sim
+from local_utils import get_sim
+sim = get_sim()
+
+from local_utils import get_default_logger
+logger = get_default_logger("simulation")
+
 
 dt = 1          # (ms) simulation timestep
 tstop = 1000    # (ms) simulaton duration
@@ -59,7 +63,7 @@ n = 1500          # number of cells
 r_ei = 4.0        # number of excitatory cells:number of inhibitory cells
 n_exc = int(round((n * r_ei / (1 + r_ei))))  # number of excitatory cells
 n_inh = n - n_exc                            # number of inhibitory cells
-logging.info(f"Setting up a network with {n_exc} excitatory neurons and {n_inh} inhibitory neurons")
+logger.info(f"Setting up a network with {n_exc} excitatory neurons and {n_inh} inhibitory neurons")
 
 pops = {
     'exc': sim.Population(
@@ -86,7 +90,7 @@ pops['exc'].initialize(v=uniformDistr)
 pops['inh'].initialize(v=uniformDistr)
 
 if sim.__name__ == 'pyNN.spiNNaker':
-    logging.info("setting 50 neurons per core since we are on a spiNNaker machine")
+    logger.info("setting 50 neurons per core since we are on a spiNNaker machine")
     sim.set_number_of_neurons_per_core(sim.IF_cond_exp, 50)
 
 ################ SYNAPTIC STUFF & CONNECTIONS ################
@@ -174,18 +178,14 @@ sim.run(tstop)
 
 outputs = dict()
 
-for layer in ['exc', 'inh']:
-    
-    # save on the notebook space
-    outputs[layer] = pops[layer].get_data()
-    
-    # save in the folder space
-    for recording in ['v', 'gsyn_inh', 'gsyn_exc', 'spikes']:
-        import os
-        try:
-            os.mkdir("VA_results")
-        except FileExistsError:
-            pass
-        pops[layer].write_data(f"VA_results/{layer}_{recording}.pkl")
-        
 
+import os
+
+try:
+    os.mkdir("VA_results")
+except FileExistsError:
+    pass
+
+for pops_name in ['exc', 'inh']:
+    
+    pops[pops_name].write_data(f"VA_results/population_{pops_name}.pkl")
