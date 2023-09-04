@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from pyNN.utility.plotting import Figure, Panel
 
 from local_utils import get_default_logger
+import seaborn as sns
+
 
 parser = argparse.ArgumentParser(description='Analisys of simulation files')
 parser.add_argument('folder', type=str, help='The folder of the simulation results')
@@ -52,6 +54,7 @@ for file in files:
 #     title="Vogels-Abbott benchmark: excitatory cells spikes")
 
 # V-density
+plt.figure(1)
 signal = results[args.population, "v"]
 print(signal.shape)
 nbins = 40
@@ -63,12 +66,28 @@ X, Y = np.meshgrid(X,Y)
 
 for time_index in range(len(signal)):
     hist[:, time_index] = np.histogram(signal[time_index], bins=v_bins, density=True)[0]*100
-
-plt.contourf(X, Y, hist)
-plt.colorbar()
+levels = [0,1,2,3,4,5,10,15,20]
+plt.contourf(X, Y, hist, levels=levels)
+cbar = plt.colorbar()
+cbar.set_label('numerical density [%]', rotation=270, size=10)
+cbar.ax.set_yticks(levels)
 plt.xlabel("time [ms]")
 plt.ylabel("V [mV]")
 plt.title(rf"$\rho(V, t)$ for {args.population}")
+
+
+# Quantiles
+# plt.figure(2)
+qq = np.quantile(np.array(signal), [.1,.2,.3,.4, .5, .6, .7, .8, .9], axis=1)
+colors = sns.color_palette("rainbow", n_colors=qq.shape[0])
+
+for q,c,l in zip(qq, colors, range(1,10)):
+    plt.plot(q, color=c,label=f"{l*10}-percentile")
+plt.legend(ncols=3, fontsize=8)
+# plt.title("quantiles of V(t)")
+# plt.xlabel("t [ms]")
+# plt.ylabel("V [mV]")
+
 plt.tight_layout()
 
 # On the remote server save instead of showing
