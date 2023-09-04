@@ -39,6 +39,9 @@ for file in files:
     # Spike trains
     results[file.replace(".pkl", ""), "spikes"] = neo_blocks[0].segments[0].spiketrains
     logger.info(f"In file: {file.replace('.pkl', ''):20} found signal: spikes")
+
+########## PLOTTING #########
+
 Figure(
     # raster plot of the presynaptic neuron spike times
     Panel(results['population_exc', 'spikes'], xlabel="Time/ms", xticks=True,
@@ -50,26 +53,11 @@ Figure(
     Panel(results['population_exc', 'v'], xlabel="Time/ms", xticks=True,
           yticks=True, markersize=1, xlim=(0, 100)),
     title="Vogels-Abbott benchmark: excitatory cells V")
+
 plt.tight_layout()
 
-
-
+# On the remote server save instead of showing
 if os.environ.get("USER") == "bbpnrsoa":
     plt.savefig(f"{folder_name}/analysis.png")
 else:
     plt.show()
-
-# # check results
-# results = recover_results(outputs)
-# results.keys()
-
-
-# from pyNN.utility.plotting import Figure, Panel
-# %matplotlib inline
-
-# Figure(
-#     # raster plot of the presynaptic neuron spike times
-#     Panel(results['exc', 'spikes'], xlabel="Time/ms", xticks=True,
-#           yticks=True, markersize=0.2, xlim=(0, tstop)),
-#     title="Vogels-Abbott benchmark: excitatory cells spikes")
-
