@@ -74,7 +74,7 @@ cbar.ax.set_yticks(levels)
 plt.xlabel("time [ms]")
 plt.ylabel("V [mV]")
 plt.title(rf"$\rho(V, t)$ for {args.population}")
-
+plt.ylim(-75, -45)
 
 # Quantiles
 # plt.figure(2)
