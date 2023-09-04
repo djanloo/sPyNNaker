@@ -79,7 +79,8 @@ pops['inh'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
 
 uniformDistr = RandomDistribution('uniform', 
                                   [cell_params["v_reset"], cell_params["v_thresh"]], 
-                                  rng=rng)
+                                #   rng=rng # this causes a ConfigurationException
+                                  )
 
 pops['exc'].initialize(v=uniformDistr)
 pops['inh'].initialize(v=uniformDistr)
@@ -176,6 +177,8 @@ for layer in ['exc', 'inh']:
     
     # save in the folder space
     for recording in ['v', 'gsyn_inh', 'gsyn_exc', 'spikes']:
-        pops[layer].write_data(f"{layer}_{recording}.pkl")
+        import os
+        os.mkdir("VA_results")
+        pops[layer].write_data(f"VA_results/{layer}_{recording}.pkl")
         
 
