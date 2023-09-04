@@ -44,8 +44,21 @@ Figure(
     Panel(results['population_exc', 'spikes'], xlabel="Time/ms", xticks=True,
           yticks=True, markersize=1, xlim=(0, 100)),
     title="Vogels-Abbott benchmark: excitatory cells spikes")
+
+Figure(
+    # raster plot of the presynaptic neuron spike times
+    Panel(results['population_exc', 'v'], xlabel="Time/ms", xticks=True,
+          yticks=True, markersize=1, xlim=(0, 100)),
+    title="Vogels-Abbott benchmark: excitatory cells V")
 plt.tight_layout()
-plt.show()
+
+
+
+if os.environ.get("USER") == "bbpnrsoa":
+    plt.savefig(f"{folder_name}/analysis.png")
+else:
+    plt.show()
+
 # # check results
 # results = recover_results(outputs)
 # results.keys()
