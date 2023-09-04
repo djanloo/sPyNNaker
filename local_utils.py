@@ -15,4 +15,4 @@ elif simulator_name == 'neuron':
     import pyNN.neuron as sim
 else:
     pprint("Simulator is not specified by DJANLOO_NEURAL_SIMULATOR\nDefaulting to [green]neuron[/green]...")
-
+    import pyNN.neuron as sim
