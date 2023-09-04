@@ -235,6 +235,8 @@ if [ "$BUILD_EDITED" = true ] ; then
     # Substitute my version
     pecho Copying modified sPyNNaker package
     cp -R $INITDIR ./
+    # Rename to prevent from name mismatch
+    mv sPyNNaker/spynnaker-custom sPyNNaker/spynnaker
 else
     pwarn Default sPyNNaker package will be used in the installation
 fi
