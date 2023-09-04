@@ -79,7 +79,7 @@ plt.ylim(-75, -45)
 # Quantiles
 # plt.figure(2)
 qq = np.quantile(np.array(signal), [.1,.2,.3,.4, .5, .6, .7, .8, .9], axis=1)
-colors = sns.color_palette("rainbow", n_colors=qq.shape[0])
+colors = sns.color_palette("Accent", n_colors=qq.shape[0])
 
 for q,c,l in zip(qq, colors, range(1,10)):
     plt.plot(q, color=c,label=f"{l*10}-percentile")
