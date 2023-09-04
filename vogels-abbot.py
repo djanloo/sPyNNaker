@@ -182,7 +182,10 @@ for layer in ['exc', 'inh']:
     # save in the folder space
     for recording in ['v', 'gsyn_inh', 'gsyn_exc', 'spikes']:
         import os
-        os.mkdir("VA_results")
+        try:
+            os.mkdir("VA_results")
+        except FileExistsError:
+            pass
         pops[layer].write_data(f"VA_results/{layer}_{recording}.pkl")
         
 
