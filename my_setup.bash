@@ -411,13 +411,12 @@ pip freeze
 ############### SIMULATION #############
 export DJANLOO_NEURAL_SIMULATOR=spiNNaker
 cd $INITDIR
-cd ..
 
 # mv sPyNNaker/simulation.py ./
 # clean_downloads # in case simulation goes well it does not return all the src anyway
 
 pecho generating check for file download in ${INITDIR}
-touch $INITDIR/check_files_download.txt
+touch check_files_download.txt
 
 echoline SIMULATION
 pecho Simulating...
