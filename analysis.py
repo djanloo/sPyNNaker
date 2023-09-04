@@ -1,7 +1,7 @@
 import argparse
 import os
 import pickle
-import logging
+import numpy as np
 
 import matplotlib.pyplot as plt
 from pyNN.utility.plotting import Figure, Panel
@@ -10,6 +10,8 @@ from local_utils import get_default_logger
 
 parser = argparse.ArgumentParser(description='Analisys of simulation files')
 parser.add_argument('folder', type=str, help='The folder of the simulation results')
+parser.add_argument('--population', type=str, help='The population under analysis')
+
 args = parser.parse_args()
 folder_name = args.folder
 
@@ -42,18 +44,31 @@ for file in files:
 
 ########## PLOTTING #########
 
-Figure(
-    # raster plot of the presynaptic neuron spike times
-    Panel(results['population_exc', 'spikes'], xlabel="Time/ms", xticks=True,
-          yticks=True, markersize=1, xlim=(0, 100)),
-    title="Vogels-Abbott benchmark: excitatory cells spikes")
+# Spikes
+# Figure(
+#     # raster plot of the presynaptic neuron spike times
+#     Panel(results['population_exc', 'spikes'], xlabel="Time/ms", xticks=True,
+#           yticks=True, markersize=1, xlim=(0, 100)),
+#     title="Vogels-Abbott benchmark: excitatory cells spikes")
 
-Figure(
-    # raster plot of the presynaptic neuron spike times
-    Panel(results['population_exc', 'v'], xlabel="Time/ms", xticks=True,
-          yticks=True, markersize=1, xlim=(0, 100)),
-    title="Vogels-Abbott benchmark: excitatory cells V")
+# V-density
+signal = results[args.population, "v"]
+print(signal.shape)
+nbins = 40
+hist=np.zeros((nbins, len(signal)))
 
+v_bins = np.linspace(np.min(signal), np.max(signal), nbins+1)
+X, Y = np.linspace(0,len(signal), len(signal)), v_bins[:-1]
+X, Y = np.meshgrid(X,Y)
+
+for time_index in range(len(signal)):
+    hist[:, time_index] = np.histogram(signal[time_index], bins=v_bins, density=True)[0]*100
+
+plt.contourf(X, Y, hist)
+plt.colorbar()
+plt.xlabel("time [ms]")
+plt.ylabel("V [mV]")
+plt.title(rf"$\rho(V, t)$ for {args.population}")
 plt.tight_layout()
 
 # On the remote server save instead of showing

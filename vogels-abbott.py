@@ -58,7 +58,7 @@ cell_params = dict(tau_m=20.0,# ms
 
 ################ POPULATIONS ################
 
-n = 1500          # number of cells
+n = 2500          # number of cells
 r_ei = 4.0        # number of excitatory cells:number of inhibitory cells
 n_exc = int(round((n * r_ei / (1 + r_ei))))  # number of excitatory cells
 n_inh = n - n_exc                            # number of inhibitory cells
