@@ -412,7 +412,7 @@ pip freeze
 cd $INITDIR
 cd ..
 
-mv sPyNNaker/simulation.py ./
+# mv sPyNNaker/simulation.py ./
 # clean_downloads # in case simulation goes well it does not return all the src anyway
 
 pecho generating check for file download in ${INITDIR}
@@ -421,5 +421,5 @@ touch $INITDIR/check_files_download.txt
 echoline SIMULATION
 pecho Simulating...
 
-python3 simulation.py
+python3 vogels-abbott.py
 
