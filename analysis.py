@@ -54,7 +54,7 @@ for file in files:
 #     title="Vogels-Abbott benchmark: excitatory cells spikes")
 
 # V-density
-plt.figure(1)
+plt.figure(1, figsize=(6,5))
 signal = results[args.population, "v"]
 print(signal.shape)
 nbins = 40
@@ -66,14 +66,14 @@ X, Y = np.meshgrid(X,Y)
 
 for time_index in range(len(signal)):
     hist[:, time_index] = np.histogram(signal[time_index], bins=v_bins, density=True)[0]*100
-levels = [0,1,2,3,4,5,10,15,20]
+levels = [0,1,2,3,4,5,10,15,20, 25]
 plt.contourf(X, Y, hist, levels=levels)
 cbar = plt.colorbar()
 cbar.set_label('numerical density [%]', rotation=270, size=10)
 cbar.ax.set_yticks(levels)
-plt.xlabel("time [ms]")
-plt.ylabel("V [mV]")
-plt.title(rf"$\rho(V, t)$ for {args.population}")
+plt.xlabel("time [ms]", size=10)
+plt.ylabel("V [mV]", size=10)
+plt.title(rf"$\rho(V, t)$ for {args.population} ({os.environ.get('DJANLOO_NEURAL_SIMULATOR')})", size=13)
 plt.ylim(-75, -45)
 
 # Quantiles
