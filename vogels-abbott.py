@@ -21,7 +21,6 @@ sim = get_sim()
 from local_utils import get_default_logger
 logger = get_default_logger("simulation")
 
-
 dt = 1          # (ms) simulation timestep
 tstop = 1000    # (ms) simulaton duration
 delay = 2       # (ms) 
