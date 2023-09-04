@@ -98,8 +98,12 @@ inh_synapses = sim.StaticSynapse(weight=w_inh, delay=delay)
 
 pconn = 0.02      # connection probability (2%)
 
-exc_conn = sim.FixedProbabilityConnector(pconn, rng=rng)
-inh_conn = sim.FixedProbabilityConnector(pconn, rng=rng)
+exc_conn = sim.FixedProbabilityConnector(pconn, 
+                                         #rng=rng # this raises ConfigurationException
+                                         )
+inh_conn = sim.FixedProbabilityConnector(pconn,
+                                         #rng=rng # this raiss ConfigurationException
+                                         )
 
 connections = dict(
     
