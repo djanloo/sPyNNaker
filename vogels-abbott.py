@@ -7,7 +7,7 @@ AUTHOR: djanloo
 DATE:   04/09/23
 """
 
-import socket #?
+# import socket #?
 
 from pyNN.random import NumpyRNG, RandomDistribution
 from pyNN.utility.plotting import Figure, Panel
