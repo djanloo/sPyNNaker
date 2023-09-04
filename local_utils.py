@@ -10,6 +10,9 @@ simulator_name = os.environ.get("DJANLOO_NEURAL_SIMULATOR")
 if simulator_name == "spiNNaker":
     pprint("choosing [blue]spiNNaker[/blue] as simulator")
     import pyNN.spiNNaker as sim
-else:
+elif simulator_name == 'neuron':
     pprint("Choosing [green]neuron[/green] as simulator")
     import pyNN.neuron as sim
+else:
+    pprint("Simulator is not specified by DJANLOO_NEURAL_SIMULATOR\nDefaulting to [green]neuron[/green]...")
+
