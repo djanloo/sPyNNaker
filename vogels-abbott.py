@@ -46,6 +46,11 @@ parser.add_argument('--out_prefix',
                     default="p", 
                     help='the prefix of the output files')
 
+parser.add_argument('--timescale', 
+                    type=int, 
+                    default=1, 
+                    help="the time scale factor")
+
 run_params = parser.parse_args()
 
 dt = 1          # (ms) simulation timestep
@@ -54,9 +59,11 @@ delay = 2       # (ms)
 ################ SETUP ################
 
 sim.setup(
-    timestep=dt, 
+    timestep=dt,
+    time_scale_factor=run_params.timescale,
     min_delay=delay, 
-    max_delay=delay) # [ms] # not that the max_delay supported by SpiNNaker is timestep * 144
+    max_delay=delay
+    ) # [ms] # not that the max_delay supported by SpiNNaker is timestep * 144
 
 rngseed = 98766987
 rng = NumpyRNG(seed=rngseed, parallel_safe=True)
