@@ -41,6 +41,11 @@ parser.add_argument('--duration',
                     default=100, 
                     help='the duration of the simularion in ms')
 
+parser.add_argument('--out_prefix', 
+                    type=str,
+                    default="p", 
+                    help='the prefix of the output files')
+
 run_params = parser.parse_args()
 
 dt = 1          # (ms) simulation timestep
@@ -201,5 +206,4 @@ except FileExistsError:
     pass
 
 for pops_name in ['exc', 'inh']:
-    
-    pops[pops_name].write_data(f"VA_results/population_{pops_name}.pkl")
+    pops[pops_name].write_data(f"VA_results/{run_params.out_prefix}{pops_name}.pkl")
