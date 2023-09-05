@@ -146,7 +146,7 @@ if "density" in args.plot:
                                 analog_ax.contourf(X, Y, hist, levels=10)
                             )
     cbar.set_label('log density', rotation=270, size=10)
-    
+
     analog_ax.set_xlabel("t [ms]")
     analog_ax.set_ylabel("V [mV]")
 
@@ -166,12 +166,12 @@ if "quantiles" in args.plot:
     analog_ax.legend(ncols=3, fontsize=8)
     analog_ax.set_title("quantiles of V(t)")
     
-    analog_fig.show()
-
 # On the remote server save instead of showing
 if os.environ.get("USER") == "bbpnrsoa":
-    analog_fig.savefig(f"{folder_name}/analysis_analog.png")
-    spike_fig.savefig(f"{folder_name}/analysis_spikes.png")
+    if analog_fig is not None:
+        analog_fig.savefig(f"{folder_name}/analysis_analog.png")
+    if spike_fig is not None:
+        spike_fig.savefig(f"{folder_name}/analysis_spikes.png")
 else:
     plt.show()
     pass
