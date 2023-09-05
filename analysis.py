@@ -102,15 +102,15 @@ if "spikes" in args.plot:
     spike_axes['spikes'].set_xlim((spikelist.t_start, spikelist.t_stop))
 
     # Activity in time
-    act_t = np.histogram(data.T[0], bins=np.linspace(spikelist.t_start, spikelist.t_stop, 42 +1), density=True)[0]
-    spike_axes['time_activity'].step(np.linspace(spikelist.t_start, spikelist.t_stop, 42), act_t)
+    act_t = np.histogram(data.T[0], bins=np.linspace(spikelist.t_start, spikelist.t_stop, args.bins +1), density=True)[0]
+    spike_axes['time_activity'].step(np.linspace(spikelist.t_start, spikelist.t_stop, args.bins), act_t)
     # Details
     spike_axes['time_activity'].set_xlabel("t [ms]")
     spike_axes['time_activity'].set_ylabel("PSTH")
 
     # Activity in neuron
     _, act_n = np.unique(data.T[1], return_counts=True)
-    act_n = np.concatenate( (act_n, [0]*(2000 - len(act_n))))
+    act_n = np.concatenate( (act_n, [0]*(len(_) - len(act_n))))
     _, act_n = np.unique(act_n, return_counts=True)
     spike_axes['neuron_activity'].barh(range(len(act_n)), act_n)
     spike_axes['neuron_activity'].set_xscale("log")
