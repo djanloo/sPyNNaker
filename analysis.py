@@ -9,10 +9,12 @@ from pyNN.utility.plotting import Figure, Panel
 from local_utils import get_default_logger
 import seaborn as sns
 
-
+possible_plots = ["quantiles_v", "density_v", "spikes"]
 parser = argparse.ArgumentParser(description='Analisys of simulation files')
 parser.add_argument('folder', type=str, help='The folder of the simulation results')
 parser.add_argument('--population', type=str, help='The population under analysis')
+parser.add_argument('--plot', type=str, choices=possible_plots, nargs='+', default="spikes",
+                            help=f"Plot t be displayed, choices are: {','.join(possible_plots)}")
 
 args = parser.parse_args()
 folder_name = args.folder
@@ -45,50 +47,83 @@ for file in files:
     logger.info(f"In file: {file.replace('.pkl', ''):20} found signal: spikes")
 
 ########## PLOTTING #########
+analog_fig, analog_ax = plt.subplots(figsize=(6,5))
+spike_fig, spike_axes = plt.subplot_mosaic([["spikes", "neuron_activity"], ["time_activity", "none"]],
+                                                        height_ratios=[1,0.5],
+                                                        width_ratios=[1, 0.5],
+                                                        figsize=(6,5), 
+                                                        sharex=False, 
+                                                        sharey=False,
+                                                        constrained_layout=True)
 
-# Spikes
-# Figure(
-#     # raster plot of the presynaptic neuron spike times
-#     Panel(results['population_exc', 'spikes'], xlabel="Time/ms", xticks=True,
-#           yticks=True, markersize=1, xlim=(0, 100)),
-#     title="Vogels-Abbott benchmark: excitatory cells spikes")
+# Spikes & activity
+if "spikes" in args.plot:
+    spikelist = results[args.population, 'spikes']
+
+    data = []
+    for neuron_index, neuron_spikes in enumerate(spikelist):
+        for neuron_spike_time in neuron_spikes.times:
+            data.append([neuron_spike_time, neuron_index])
+
+    data = np.array(data)
+    spike_axes['spikes'].scatter(*(data.T), marker=".", color="k")
+    spike_axes['spikes'].set_xlim((spikelist.t_start, spikelist.t_stop))
+
+    # Activity in time
+    act_t = np.histogram(data.T[0], bins=np.linspace(spikelist.t_start, spikelist.t_stop, 42 +1), density=True)[0]
+    print(act_t.shape)
+    spike_axes['time_activity'].step(np.linspace(spikelist.t_start, spikelist.t_stop, 42), act_t)
+
+    # Activity in neuron
+    print(data.T[1])
+    _, act_n = np.unique(data.T[1], return_counts=True)
+    act_n = np.concatenate( (act_n, [0]*(2000 - len(act_n))))
+
+    print(act_n, len(act_n))
+    _, act_n = np.unique(act_n, return_counts=True)
+    print(act_n, len(act_n))
+    spike_axes['neuron_activity'].barh(range(len(act_n)), act_n )
+    spike_axes['neuron_activity'].set_xscale("log")
+    spike_axes['none'].axis("off")
+
 
 # V-density
-plt.figure(1, figsize=(6,5))
-signal = results[args.population, "v"]
-print(signal.shape)
-nbins = 40
-hist=np.zeros((nbins, len(signal)))
+if "density_v" in args.plot:
+    signal = results[args.population, "v"]
 
-v_bins = np.linspace(np.min(signal), np.max(signal), nbins+1)
-X, Y = np.linspace(0,len(signal), len(signal)), v_bins[:-1]
-X, Y = np.meshgrid(X,Y)
+    nbins = 40
+    hist=np.zeros((nbins, len(signal)))
 
-for time_index in range(len(signal)):
-    hist[:, time_index] = np.histogram(signal[time_index], bins=v_bins, density=True)[0]*100
-levels = [0,1,2,3,4,5,10,15,20, 25]
-plt.contourf(X, Y, hist, levels=levels)
-cbar = plt.colorbar()
-cbar.set_label('numerical density [%]', rotation=270, size=10)
-cbar.ax.set_yticks(levels)
-plt.xlabel("time [ms]", size=10)
-plt.ylabel("V [mV]", size=10)
-plt.title(rf"$\rho(V, t)$ for {args.population} ({os.environ.get('DJANLOO_NEURAL_SIMULATOR')})", size=13)
-plt.ylim(-75, -45)
+    v_bins = np.linspace(np.min(signal), np.max(signal), nbins+1)
+    X, Y = np.linspace(0,len(signal), len(signal)), v_bins[:-1]
+    X, Y = np.meshgrid(X,Y)
+
+    for time_index in range(len(signal)):
+        hist[:, time_index] = np.histogram(signal[time_index], bins=v_bins, density=True)[0]*100
+    levels = [0,1,2,3,4,5,10,15,20, 25]
+
+    cbar = analog_fig.colorbar(
+                                analog_ax.contourf(X, Y, hist, levels=levels)
+                            )
+    
+    cbar.set_label('numerical density [%]', rotation=270, size=10)
+    cbar.ax.set_yticks(levels)
+    analog_ax.set_xlabel("time [ms]", size=10)
+    analog_ax.set_ylabel("V [mV]", size=10)
+    analog_ax.set_title(rf"$\rho(V, t)$ for {args.population} ({os.environ.get('DJANLOO_NEURAL_SIMULATOR')})", size=13)
+    analog_ax.set_ylim(-75, -45)
 
 # Quantiles
-# plt.figure(2)
-qq = np.quantile(np.array(signal), [.1,.2,.3,.4, .5, .6, .7, .8, .9], axis=1)
-colors = sns.color_palette("Accent", n_colors=qq.shape[0])
+if "quantiles_v" in args.plot:
+    qq = np.quantile(np.array(signal), [.1,.2,.3,.4, .5, .6, .7, .8, .9], axis=1)
+    colors = sns.color_palette("Accent", n_colors=qq.shape[0])
 
-for q,c,l in zip(qq, colors, range(1,10)):
-    plt.plot(q, color=c,label=f"{l*10}-percentile")
-plt.legend(ncols=3, fontsize=8)
-# plt.title("quantiles of V(t)")
-# plt.xlabel("t [ms]")
-# plt.ylabel("V [mV]")
-
-plt.tight_layout()
+    for q,c,l in zip(qq, colors, range(1,10)):
+        analog_ax.plot(q, color=c,label=f"{l*10}-percentile")
+    analog_ax.legend(ncols=3, fontsize=8)
+    analog_ax.set_title("quantiles of V(t)")
+    analog_ax.set_xlabel("t [ms]")
+    analog_ax.set_ylabel("V [mV]")
 
 # On the remote server save instead of showing
 if os.environ.get("USER") == "bbpnrsoa":
