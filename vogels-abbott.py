@@ -6,9 +6,6 @@ https://github.com/albertoarturovergani/CNT-2023/blob/main/SpiNNaker/eg_balance-
 AUTHOR: djanloo
 DATE:   04/09/23
 """
-
-# import socket #?
-
 from pyNN.random import NumpyRNG, RandomDistribution
 from pyNN.utility.plotting import Figure, Panel
 
@@ -21,8 +18,32 @@ sim = get_sim()
 from local_utils import get_default_logger
 logger = get_default_logger("simulation")
 
+import argparse
+parser = argparse.ArgumentParser(description='Vogels-Abbott benchmark')
+
+parser.add_argument('--n_neurons', 
+                    type=int,
+                    default=2500, 
+                    help='the number of total neurons neurons')
+
+parser.add_argument('--exc_conn_p', 
+                    type=float,
+                    default=0.05, 
+                    help='connection probability of excitatory network')
+
+parser.add_argument('--inh_conn_p', 
+                    type=float,
+                    default=0.05, 
+                    help='connection probability of inhibitory network')
+
+parser.add_argument('--duration', 
+                    type=int,
+                    default=100, 
+                    help='the duration of the simularion in ms')
+
+run_params = parser.parse_args()
+
 dt = 1          # (ms) simulation timestep
-tstop = 1000    # (ms) simulaton duration
 delay = 2       # (ms) 
 
 ################ SETUP ################
@@ -58,10 +79,9 @@ cell_params = dict(tau_m=20.0,# ms
 
 ################ POPULATIONS ################
 
-n = 2500          # number of cells
 r_ei = 4.0        # number of excitatory cells:number of inhibitory cells
-n_exc = int(round((n * r_ei / (1 + r_ei))))  # number of excitatory cells
-n_inh = n - n_exc                            # number of inhibitory cells
+n_exc = int(round((run_params.n_neurons * r_ei / (1 + r_ei))))  # number of excitatory cells
+n_inh = run_params.n_neurons - n_exc                            # number of inhibitory cells
 logger.info(f"Setting up a network with {n_exc} excitatory neurons and {n_inh} inhibitory neurons")
 
 pops = {
@@ -99,12 +119,10 @@ w_inh = 51.0 *1e-3       # (uS)
 exc_synapses = sim.StaticSynapse(weight=w_exc, delay=delay)
 inh_synapses = sim.StaticSynapse(weight=w_inh, delay=delay)
 
-pconn = 0.02      # connection probability (2%)
-
-exc_conn = sim.FixedProbabilityConnector(pconn, 
+exc_conn = sim.FixedProbabilityConnector(run_params.exc_conn_p, 
                                          #rng=rng # this raises ConfigurationException
                                          )
-inh_conn = sim.FixedProbabilityConnector(pconn,
+inh_conn = sim.FixedProbabilityConnector(run_params.inh_conn_p,
                                          #rng=rng # this raiss ConfigurationException
                                          )
 
@@ -153,7 +171,6 @@ pops['thalamus'] = sim.Population(
     label="expoisson")
 pops['thalamus'].record("spikes")
 
-
 rconn = 0.01
 ext_conn = sim.FixedProbabilityConnector(rconn)
 
@@ -172,11 +189,9 @@ connections['ext2i'] = sim.Projection(
     synapse_type=sim.StaticSynapse(weight=0.1))
 
 ################ RUN ################
-tstop = 100# (ms)
-sim.run(tstop)
+sim.run(run_params.duration)
 
 outputs = dict()
-
 
 import os
 
