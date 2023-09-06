@@ -50,7 +50,7 @@ parser.add_argument('--conf', type=str, default=None, help="the configuration fi
 
 args = parser.parse_args()
 logger.setLevel(args.v)
-folder_name = args.folder
+folder_name = args.folder.replace('/', '')
 files = [f for f in os.listdir(folder_name) if f.endswith(".pkl")]
 
 results = dict()
@@ -82,7 +82,7 @@ analog_fig, analog_ax, spike_fig, spike_axes = None, None, None, None
 
 if args.conf is None:
     args.conf = args.population[:-4]
-    logger.debug(f"configuration file was automatcally set to {args.conf}")
+    logger.debug(f"configuration file was automatcally set to {args.conf}.cfg")
 
 with open(f"{folder_name}/{args.conf}.cfg", "rb") as f:
     conf_dict = pickle.load(f)
@@ -145,9 +145,11 @@ if "spikes" in args.plot:
 
 # V-density
 if "density" in args.plot:
-    analog_fig, analog_ax = plt.subplots(figsize=(6,5))
-    analog_ax.set_xlabel("t [ms]")
-    analog_ax.set_ylabel("V [mV]")
+    analog_fig, analog_ax = plt.subplot_mosaic([['d'],['infos']],
+                                               height_ratios=[1, 0.3],
+                                               figsize=(6,5))
+    analog_ax['d'].set_xlabel("t [ms]")
+    analog_ax['d'].set_ylabel("V [mV]")
 
     signal = results[args.population, args.quantity]
     logger.debug(f"signal has shape {signal.shape}")
@@ -165,33 +167,36 @@ if "density" in args.plot:
     logger.info(f"in log density (-np.inf)-valued areas have been replaced with value {np.min(hist[np.isfinite(hist)])}")
     
     cbar = analog_fig.colorbar(
-                                analog_ax.contourf(X, Y, hist, levels=10)
+                                analog_ax['d'].contourf(X, Y, hist, levels=10)
                             )
     cbar.set_label('log density', rotation=270, size=10)
 
     # Details
-    analog_ax.set_xlabel("t [ms]")
-    analog_ax.set_ylabel("V [mV]")
-    analog_ax.set_title(fr"$\rho(V, t)$ for {args.population}")
+    analog_ax['d'].set_xlabel("t [ms]")
+    analog_ax['d'].set_ylabel("V [mV]")
+    analog_ax['d'].set_title(fr"$\rho(V, t)$ for {args.population}")
 
+    # Infos 
+    annotate_dict(conf_dict, analog_ax['infos'])
 
 # Quantiles
 if "quantiles" in args.plot:
     if analog_fig is None:
-        analog_fig, analog_ax = plt.subplots(figsize=(6,5))
-
+        analog_fig, analog_ax = plt.subplot_mosaic([['d'],['infos']],
+                                               height_ratios=[1, 0.3],
+                                               figsize=(6,5))
         # Details
-        analog_ax.set_xlabel("t [ms]")
-        analog_ax.set_ylabel("V [mV]")
-        analog_ax.set_title(fr"$\rho(V, t)$ for {args.population}")
+        analog_ax['d'].set_xlabel("t [ms]")
+        analog_ax['d'].set_ylabel("V [mV]")
+        analog_ax['d'].set_title(fr"$\rho(V, t)$ for {args.population}")
 
     signal = results[args.population, args.quantity]
     qq = np.quantile(np.array(signal), [.1,.2,.3,.4, .5, .6, .7, .8, .9], axis=1)
     colors = sns.color_palette("Accent", n_colors=qq.shape[0])
 
     for q,c,l in zip(qq, colors, range(1,10)):
-        analog_ax.plot(q, color=c,label=f"{l*10}-percentile")
-    analog_ax.legend(ncols=3, fontsize=8)
+        analog_ax['d'].plot(q, color=c,label=f"{l*10}-percentile")
+    analog_ax['d'].legend(ncols=3, fontsize=8)
     
 # On the remote server save instead of showing
 if os.environ.get("USER") == "bbpnrsoa":

@@ -37,3 +37,7 @@ def annotate_dict(dict_, ax):
     ys = np.linspace(0,1, len(dict_)+2)
     for key, y in zip(dict_.keys(), ys[1:-1]):
         ax.annotate(f"{key}={dict_[key]}", (0, y), ha='center')
+    
+    ax.set_xlim(-1,1)
+    ax.set_ylim(0,1)
+    ax.axis('off')
