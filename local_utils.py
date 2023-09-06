@@ -4,6 +4,8 @@ DRY approach"""
 import os
 import logging
 from rich import print as pprint
+import matplotlib.pyplot as plt
+import numpy as np
 
 def get_sim():
     # Choice of the simulator is based on environment variables
@@ -30,3 +32,8 @@ def get_default_logger(logger_name):
     ch.setLevel(logging.DEBUG)
     logger.addHandler(ch)
     return logger
+
+def annotate_dict(dict_, ax):
+    ys = np.linspace(0,1, len(dict_)+2)
+    for key, y in zip(dict_.keys(), ys[1:-1]):
+        ax.annotate(f"{key}={dict_[key]}", (0, y), ha='center')

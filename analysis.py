@@ -5,12 +5,11 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 plt.style.use("./style.mplstyle")
-from pyNN.utility.plotting import Figure, Panel
 
-from local_utils import get_default_logger
+from local_utils import get_default_logger, annotate_dict
 import seaborn as sns
 
-logger = get_default_logger("analysis")
+logger = get_default_logger("ANALYSIS")
 
 possible_plots = ["quantiles", "density", "spikes"]
 quantities = ["v", "gsyn_exc", "gsyn_inh"]
@@ -49,11 +48,10 @@ parser.add_argument('--v',
                     help="verbosity level")
 
 args = parser.parse_args()
-
 logger.setLevel(args.v)
-
 folder_name = args.folder
 files = [f for f in os.listdir(folder_name) if f.endswith(".pkl")]
+
 results = dict()
 
 for file in files:
@@ -66,7 +64,7 @@ for file in files:
                 break
 
     if len(neo_blocks) > 1:
-        logger.error(f"more than one neo blocks were found in file {file}")
+        logger.critical(f"more than one neo blocks were found in file {file}")
         exit()
 
     # Analog signals
@@ -84,12 +82,13 @@ analog_fig, analog_ax, spike_fig, spike_axes = None, None, None, None
 # Spikes & activity
 if "spikes" in args.plot:
     spike_fig, spike_axes = plt.subplot_mosaic([["spikes", "neuron_activity"], ["time_activity", "none"]],
-                                                        height_ratios=[1,0.5],
-                                                        width_ratios=[1, 0.5],
+                                                        height_ratios=[1,0.4],
+                                                        width_ratios=[1, 0.4],
                                                         figsize=(6,5), 
                                                         sharex=False, 
                                                         sharey=False,
                                                         constrained_layout=True)
+    
     spikelist = results[args.population, 'spikes']
     data = []
     for neuron_index, neuron_spikes in enumerate(spikelist):
@@ -109,10 +108,21 @@ if "spikes" in args.plot:
     spike_axes['time_activity'].set_ylabel("PSTH")
 
     # Activity in neuron
-    _, act_n = np.unique(data.T[1], return_counts=True)
-    act_n = np.concatenate( (act_n, [0]*(len(_) - len(act_n))))
-    _, act_n = np.unique(act_n, return_counts=True)
-    spike_axes['neuron_activity'].barh(range(len(act_n)), act_n)
+
+    # Counts how many times each neuron has fired
+    fired_neuron_index, n_firings_for_each_neuron = np.unique(data.T[1], return_counts=True)
+    logger.debug(f"neurons that fired are {len(fired_neuron_index)} in total")
+    logger.debug(f"neurons firing occurrencies are {n_firings_for_each_neuron}")
+    logger.debug(f"completely inactive neurons are {len(spikelist) - len(fired_neuron_index)}")
+
+    # Adds the counts for those that never fired
+    n_activation_neuron = np.concatenate(
+                                            (n_firings_for_each_neuron, np.zeros(len(spikelist) - len(fired_neuron_index)))  
+                                        )
+
+    # Counts how many neurons had the same number of activations
+    number_of_activations, number_of_neurons = np.unique(n_firings_for_each_neuron, return_counts=True)
+    spike_axes['neuron_activity'].barh(number_of_activations, number_of_neurons)
     spike_axes['neuron_activity'].set_xscale("log")
     # Details
     spike_axes['neuron_activity'].set_xlabel("# of neurons")
@@ -120,7 +130,9 @@ if "spikes" in args.plot:
 
     # Turn off the dummy corner plots
     spike_axes['none'].axis("off")
+    annotate_dict(dict(n_neurons=5000, exc_connection_prob=0.1), spike_axes['none'])
 
+    spike_fig.suptitle(args.population)
 
 # V-density
 if "density" in args.plot:
@@ -141,21 +153,28 @@ if "density" in args.plot:
         hist[:, time_index] = np.log10(np.histogram(signal[time_index], bins=v_bins, density=True)[0])
 
     hist[~np.isfinite(hist)] = np.min(hist[np.isfinite(hist)])
-    logger.info(f"-inf valued areas in log density have been replaced with minimal {np.min(hist[np.isfinite(hist)])}")
+    logger.info(f"in log density (-np.inf)-valued areas have been replaced with value {np.min(hist[np.isfinite(hist)])}")
+    
     cbar = analog_fig.colorbar(
                                 analog_ax.contourf(X, Y, hist, levels=10)
                             )
     cbar.set_label('log density', rotation=270, size=10)
 
+    # Details
     analog_ax.set_xlabel("t [ms]")
     analog_ax.set_ylabel("V [mV]")
+    analog_ax.set_title(fr"$\rho(V, t)$ for {args.population}")
+
 
 # Quantiles
 if "quantiles" in args.plot:
     if analog_fig is None:
         analog_fig, analog_ax = plt.subplots(figsize=(6,5))
+
+        # Details
         analog_ax.set_xlabel("t [ms]")
         analog_ax.set_ylabel("V [mV]")
+        analog_ax.set_title(fr"$\rho(V, t)$ for {args.population}")
 
     signal = results[args.population, args.quantity]
     qq = np.quantile(np.array(signal), [.1,.2,.3,.4, .5, .6, .7, .8, .9], axis=1)
@@ -164,7 +183,6 @@ if "quantiles" in args.plot:
     for q,c,l in zip(qq, colors, range(1,10)):
         analog_ax.plot(q, color=c,label=f"{l*10}-percentile")
     analog_ax.legend(ncols=3, fontsize=8)
-    analog_ax.set_title("quantiles of V(t)")
     
 # On the remote server save instead of showing
 if os.environ.get("USER") == "bbpnrsoa":
