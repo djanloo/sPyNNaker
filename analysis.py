@@ -46,6 +46,7 @@ parser.add_argument('--v',
                     type=int, 
                     default=10,
                     help="verbosity level")
+parser.add_argument('--conf', type=str, default=None, help="the configuration file of the run")
 
 args = parser.parse_args()
 logger.setLevel(args.v)
@@ -78,6 +79,14 @@ for file in files:
 
 ########## PLOTTING #########
 analog_fig, analog_ax, spike_fig, spike_axes = None, None, None, None
+
+if args.conf is None:
+    args.conf = args.population[:-4]
+    logger.debug(f"configuration file was automatcally set to {args.conf}")
+
+with open(f"{folder_name}/{args.conf}.cfg", "rb") as f:
+    conf_dict = pickle.load(f)
+    logger.info(f"Configuration of the run is {conf_dict}")
 
 # Spikes & activity
 if "spikes" in args.plot:
@@ -116,7 +125,7 @@ if "spikes" in args.plot:
     logger.debug(f"completely inactive neurons are {len(spikelist) - len(fired_neuron_index)}")
 
     # Adds the counts for those that never fired
-    n_activation_neuron = np.concatenate(
+    n_firings_for_each_neuron = np.concatenate(
                                             (n_firings_for_each_neuron, np.zeros(len(spikelist) - len(fired_neuron_index)))  
                                         )
 
@@ -130,7 +139,7 @@ if "spikes" in args.plot:
 
     # Turn off the dummy corner plots
     spike_axes['none'].axis("off")
-    annotate_dict(dict(n_neurons=5000, exc_connection_prob=0.1), spike_axes['none'])
+    annotate_dict(conf_dict, spike_axes['none'])
 
     spike_fig.suptitle(args.population)
 

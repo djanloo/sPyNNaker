@@ -6,6 +6,8 @@ https://github.com/albertoarturovergani/CNT-2023/blob/main/SpiNNaker/eg_balance-
 AUTHOR: djanloo
 DATE:   04/09/23
 """
+import pickle
+
 from pyNN.random import NumpyRNG, RandomDistribution
 from pyNN.utility.plotting import Figure, Panel
 
@@ -62,8 +64,8 @@ sim.setup(
     timestep=dt,
     time_scale_factor=run_params.timescale,
     min_delay=delay, 
-    max_delay=delay
-    ) # [ms] # not that the max_delay supported by SpiNNaker is timestep * 144
+    # max_delay=delay # not supported
+    )
 
 rngseed = 98766987
 rng = NumpyRNG(seed=rngseed, parallel_safe=True)
@@ -212,5 +214,12 @@ try:
 except FileExistsError:
     pass
 
+# Saves results for the populations
 for pops_name in ['exc', 'inh']:
-    pops[pops_name].write_data(f"VA_results/{run_params.out_prefix}{pops_name}.pkl")
+    pops[pops_name].write_data(f"VA_results/{run_params.out_prefix}_{pops_name}.pkl")
+
+# Saves the configuration of the run
+with open(f"VA_results/{run_params.out_prefix}.cfg", 'wb') as file:
+    run_conf = vars(run_params)
+    del run_conf["out_prefix"]
+    pickle.dump(run_conf, file)
