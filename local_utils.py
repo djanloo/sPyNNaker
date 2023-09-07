@@ -23,11 +23,13 @@ def get_sim():
 
     return sim
 
-def get_default_logger(logger_name):
+def get_default_logger(logger_name, lvl=logging.DEBUG):
     logger = logging.getLogger(logger_name)
+
     logger.setLevel(logging.DEBUG)
+
     ch = logging.StreamHandler()
-    formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(name)s-%(levelname)s: %(message)s')
     ch.setFormatter(formatter)
     ch.setLevel(logging.DEBUG)
     logger.addHandler(ch)

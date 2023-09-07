@@ -7,57 +7,22 @@ import matplotlib.pyplot as plt
 plt.style.use("./style.mplstyle")
 
 from local_utils import get_default_logger, annotate_dict
-import seaborn as sns
+from plotting import PlotGroup, DensityPlot, SpikePlot, QuantilePlot
 
-logger = get_default_logger("ANALYSIS")
+import seaborn as sns
 
 possible_plots = ["quantiles", "density", "spikes"]
 quantities = ["v", "gsyn_exc", "gsyn_inh"]
 
-parser = argparse.ArgumentParser(description='Analisys of simulation files')
+def read_neo_file(file):
+    """
+    file name must be given without the extension.
+    """
+    # Each file can contain more serialized objects
+    global results, folder_name
 
-parser.add_argument('folder', 
-                    type=str, 
-                    help='the folder of the simulation results')
-
-parser.add_argument('population', 
-                    type=str, 
-                    help='the population under analysis')
-
-parser.add_argument('--plot', 
-                    type=str, 
-                    choices=possible_plots, 
-                    nargs='+', 
-                    default="spikes",
-                    help=f"plot to be displayed, choices are: {', '.join(possible_plots)}")
-
-parser.add_argument('--bins', 
-                    type=int,
-                    default=30,
-                    help="the number of bins for activity plot"
-                    )
-parser.add_argument('--quantity',
-                   type=str,
-                   default='v',
-                   choices=quantities,
-                   help=f"the quantity to plot, chosed among: {', '.join(quantities)}"
-                   )
-parser.add_argument('--v', 
-                    type=int, 
-                    default=10,
-                    help="verbosity level")
-parser.add_argument('--conf', type=str, default=None, help="the configuration file of the run")
-
-args = parser.parse_args()
-logger.setLevel(args.v)
-folder_name = args.folder.replace('/', '')
-files = [f for f in os.listdir(folder_name) if f.endswith(".pkl")]
-
-results = dict()
-
-for file in files:
-    neo_blocks = []
-    with (open(f"{folder_name}/{file}", "rb")) as openfile:
+    with (open(f"{folder_name}/{file}.pkl", "rb")) as openfile:
+        neo_blocks = []
         while True:
             try:
                 neo_blocks.append(pickle.load(openfile))
@@ -66,144 +31,158 @@ for file in files:
 
     if len(neo_blocks) > 1:
         logger.critical(f"more than one neo blocks were found in file {file}")
-        exit()
+        raise NotImplementedError("Only one neo block can be contained in each serialized object.")
 
     # Analog signals
     for analogsignal in neo_blocks[0].segments[0].analogsignals:
-        results[file.replace(".pkl", ""), analogsignal.name] = analogsignal
-        logger.info(f"In file: {file.replace('.pkl', ''):20} found signal: {analogsignal.name:20}")
+        results[file, analogsignal.name] = analogsignal
+        logger.info(f"In file: {file:40} found signal: {analogsignal.name:20}")
 
     # Spike trains
-    results[file.replace(".pkl", ""), "spikes"] = neo_blocks[0].segments[0].spiketrains
-    logger.info(f"In file: {file.replace('.pkl', ''):20} found signal: spikes")
+    results[file, "spikes"] = neo_blocks[0].segments[0].spiketrains
+    logger.info(f"In file: {file:40} found signal: spikes")
 
-########## PLOTTING #########
-analog_fig, analog_ax, spike_fig, spike_axes = None, None, None, None
 
-if args.conf is None:
-    args.conf = args.population[:-4]
-    logger.debug(f"configuration file was automatcally set to {args.conf}.cfg")
 
-with open(f"{folder_name}/{args.conf}.cfg", "rb") as f:
-    conf_dict = pickle.load(f)
-    logger.info(f"Configuration of the run is {conf_dict}")
+def analysis(args):
+    global results
+    # Here I put the results of each simulation
+    results = dict()
+    plot_groups = []
 
-# Spikes & activity
-if "spikes" in args.plot:
-    spike_fig, spike_axes = plt.subplot_mosaic([["spikes", "neuron_activity"], ["time_activity", "none"]],
-                                                        height_ratios=[1,0.4],
-                                                        width_ratios=[1, 0.4],
-                                                        figsize=(6,5), 
-                                                        sharex=False, 
-                                                        sharey=False,
-                                                        constrained_layout=True)
-    
-    spikelist = results[args.population, 'spikes']
-    data = []
-    for neuron_index, neuron_spikes in enumerate(spikelist):
-        for neuron_spike_time in neuron_spikes.times:
-            data.append([neuron_spike_time, neuron_index])
-    data = np.array(data)
+    for population in args['populations'][0]:
 
-    # Spikes
-    spike_axes['spikes'].scatter(*(data.T), marker=".", color="k")
-    spike_axes['spikes'].set_xlim((spikelist.t_start, spikelist.t_stop))
+        plot_groups.append(PlotGroup(population))
 
-    # Activity in time
-    act_t = np.histogram(data.T[0], bins=np.linspace(spikelist.t_start, spikelist.t_stop, args.bins +1), density=True)[0]
-    spike_axes['time_activity'].step(np.linspace(spikelist.t_start, spikelist.t_stop, args.bins), act_t)
-    # Details
-    spike_axes['time_activity'].set_xlabel("t [ms]")
-    spike_axes['time_activity'].set_ylabel("PSTH")
+        # Reads the file
+        try:
 
-    # Activity in neuron
+            read_neo_file(population)
 
-    # Counts how many times each neuron has fired
-    fired_neuron_index, n_firings_for_each_neuron = np.unique(data.T[1], return_counts=True)
-    logger.debug(f"neurons that fired are {len(fired_neuron_index)} in total")
-    logger.debug(f"neurons firing occurrencies are {n_firings_for_each_neuron}")
-    logger.debug(f"completely inactive neurons are {len(spikelist) - len(fired_neuron_index)}")
+        except FileNotFoundError:
+            logger.warning(f"File {file}.pkl does not exist. Skipping.")
+            # Skips the file if the file is not found
+            continue
+        
+        ######################### SIMULATION PARAMETERS #########################
+        if args['conf'] is None:
+            config_file = population[:-4]
+            logger.info(f"Configuration file was automatcally set to {config_file}.cfg")
 
-    # Adds the counts for those that never fired
-    n_firings_for_each_neuron = np.concatenate(
-                                            (n_firings_for_each_neuron, np.zeros(len(spikelist) - len(fired_neuron_index)))  
-                                        )
+        try:
 
-    # Counts how many neurons had the same number of activations
-    number_of_activations, number_of_neurons = np.unique(n_firings_for_each_neuron, return_counts=True)
-    spike_axes['neuron_activity'].barh(number_of_activations, number_of_neurons)
-    spike_axes['neuron_activity'].set_xscale("log")
-    # Details
-    spike_axes['neuron_activity'].set_xlabel("# of neurons")
-    spike_axes['neuron_activity'].set_ylabel("# of activations")
+            with open(f"{folder_name}/{config_file}.cfg", "rb") as f:
+                conf_dict = pickle.load(f)
+                logger.info(f"Configuration of the run for {population} is {conf_dict}")
 
-    # Turn off the dummy corner plots
-    spike_axes['none'].axis("off")
-    annotate_dict(conf_dict, spike_axes['none'])
+        except FileNotFoundError:
+            logger.warning(f"Configuration file not found. Setting empty run informations.")
+            conf_dict = dict(config_file="?")
+        
+        ################################## PLOTTING ##################################
 
-    spike_fig.suptitle(args.population)
+        # Spikes & activity
+        if "spikes" in args['plot']:
 
-# V-density
-if "density" in args.plot:
-    analog_fig, analog_ax = plt.subplot_mosaic([['d'],['infos']],
-                                               height_ratios=[1, 0.3],
-                                               figsize=(6,5))
-    analog_ax['d'].set_xlabel("t [ms]")
-    analog_ax['d'].set_ylabel("V [mV]")
+            sp = SpikePlot(results[population, 'spikes'], args['bins'])
 
-    signal = results[args.population, args.quantity]
-    logger.debug(f"signal has shape {signal.shape}")
+            # Infos
+            annotate_dict(conf_dict, sp.axes['infos'])
+            sp.fig.suptitle(population)
+            plot_groups[-1].add_fig(sp)
 
-    hist=np.zeros((args.bins, len(signal)))
 
-    v_bins = np.linspace(np.min(signal), np.max(signal), args.bins+1)
-    X, Y = np.linspace(0,len(signal), len(signal)), v_bins[:-1]
-    X, Y = np.meshgrid(X,Y)
+        # V-density
+        if "density" in args['plot']:
 
-    for time_index in range(len(signal)):
-        hist[:, time_index] = np.log10(np.histogram(signal[time_index], bins=v_bins, density=True)[0])
+            dp = DensityPlot(results[population, args['quantity']], 
+                            args['bins'])
 
-    hist[~np.isfinite(hist)] = np.min(hist[np.isfinite(hist)])
-    logger.info(f"in log density (-np.inf)-valued areas have been replaced with value {np.min(hist[np.isfinite(hist)])}")
-    
-    cbar = analog_fig.colorbar(
-                                analog_ax['d'].contourf(X, Y, hist, levels=10)
-                            )
-    cbar.set_label('log density', rotation=270, size=10)
+            # Infos
+            dp.fig.suptitle(fr"$\rho(V, t)$ for {population}")
+            annotate_dict(conf_dict, dp.axes['infos'])
+            plot_groups[-1].add_fig(dp)
 
-    # Details
-    analog_ax['d'].set_xlabel("t [ms]")
-    analog_ax['d'].set_ylabel("V [mV]")
-    analog_ax['d'].set_title(fr"$\rho(V, t)$ for {args.population}")
+        # Quantiles
+        if "quantiles" in args['plot']:
+            try:
+                last_plot = plot_groups[-1].plots[-1]
+                if isinstance(last_plot, DensityPlot):
+                    fig = last_plot.fig
+                    axes = last_plot.axes
+                else:
+                    fig, axes = None, None
+            except IndexError:
+                fig, axes = None, None
 
-    # Infos 
-    annotate_dict(conf_dict, analog_ax['infos'])
+            qp = QuantilePlot(results[population, args['quantity']], fig=fig, axes=axes)
 
-# Quantiles
-if "quantiles" in args.plot:
-    if analog_fig is None:
-        analog_fig, analog_ax = plt.subplot_mosaic([['d'],['infos']],
-                                               height_ratios=[1, 0.3],
-                                               figsize=(6,5))
-        # Details
-        analog_ax['d'].set_xlabel("t [ms]")
-        analog_ax['d'].set_ylabel("V [mV]")
-        analog_ax['d'].set_title(fr"$\rho(V, t)$ for {args.population}")
+    for pg in plot_groups:
+        pg.save("VA_results_outputs")
 
-    signal = results[args.population, args.quantity]
-    qq = np.quantile(np.array(signal), [.1,.2,.3,.4, .5, .6, .7, .8, .9], axis=1)
-    colors = sns.color_palette("Accent", n_colors=qq.shape[0])
+    # On the remote server save instead of showing
+    if os.environ.get("USER") != "bbpnrsoa":
+        plt.show()
 
-    for q,c,l in zip(qq, colors, range(1,10)):
-        analog_ax['d'].plot(q, color=c,label=f"{l*10}-percentile")
-    analog_ax['d'].legend(ncols=3, fontsize=8)
-    
-# On the remote server save instead of showing
-if os.environ.get("USER") == "bbpnrsoa":
-    if analog_fig is not None:
-        analog_fig.savefig(f"{folder_name}/analysis_analog.png")
-    if spike_fig is not None:
-        spike_fig.savefig(f"{folder_name}/analysis_spikes.png")
-else:
-    plt.show()
-    pass
+if __name__=="__main__":
+
+    parser = argparse.ArgumentParser(description='Analisys of simulation files')
+
+
+    parser.add_argument('--populations', 
+                        nargs='+', action='append',
+                        default=None,
+                        help='the populations under analysis')
+
+    parser.add_argument('--folder', 
+                        type=str, 
+                        default="VA_results",
+                        help='the folder of the simulation results')
+
+    parser.add_argument('--plot', 
+                        type=str, 
+                        choices=possible_plots, 
+                        nargs='+', 
+                        default="spikes",
+                        help=f"plot to be displayed, choices are: {', '.join(possible_plots)}")
+
+    parser.add_argument('--bins', 
+                        type=int,
+                        default=30,
+                        help="the number of bins for activity plot"
+                        )
+    parser.add_argument('--quantity',
+                    type=str,
+                    default='v',
+                    choices=quantities,
+                    help=f"the quantity to plot, chosed among: {', '.join(quantities)}"
+                    )
+
+    parser.add_argument('--v', 
+                        type=int, 
+                        default=1,
+                        help="verbosity level")
+                    
+    parser.add_argument('--list_files', 
+                        action="store_true",
+                        help="list available files")
+
+    parser.add_argument('--conf', type=str, default=None, help="the configuration file of the run")
+
+    args = parser.parse_args()
+
+    # Sets the verbosity of the logger
+    logger = get_default_logger("ANALYSIS", lvl=args.v)
+
+    # Strips the backslash from the folder name
+    folder_name = args.folder.replace('/', '')
+
+    if args.list_files or args.populations is None:
+        results=dict()
+        files = [f.replace(".pkl", "") for f in os.listdir(folder_name) if f.endswith(".pkl")]
+        for file in files:
+            read_neo_file(file)
+        exit()
+
+
+    analysis(vars(args))
