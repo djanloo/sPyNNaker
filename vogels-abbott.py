@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(description='Vogels-Abbott benchmark')
 
 parser.add_argument('--n_neurons', 
                     type=int,
-                    default=2500, 
+                    default=1500, 
                     help='the number of total neurons neurons')
 
 parser.add_argument('--exc_conn_p', 
@@ -40,7 +40,7 @@ parser.add_argument('--inh_conn_p',
 
 parser.add_argument('--duration', 
                     type=int,
-                    default=100, 
+                    default=1000, 
                     help='the duration of the simularion in ms')
 
 parser.add_argument('--out_prefix', 
@@ -116,7 +116,7 @@ pops['inh'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
 
 uniformDistr = RandomDistribution('uniform', 
                                   [cell_params["v_reset"], cell_params["v_thresh"]], 
-                                #   rng=rng # this causes a ConfigurationException
+                                  rng=rng # this causes a ConfigurationException
                                   )
 
 pops['exc'].initialize(v=uniformDistr)
@@ -134,10 +134,10 @@ exc_synapses = sim.StaticSynapse(weight=w_exc, delay=delay)
 inh_synapses = sim.StaticSynapse(weight=w_inh, delay=delay)
 
 exc_conn = sim.FixedProbabilityConnector(run_params.exc_conn_p, 
-                                         #rng=rng # this raises ConfigurationException
+                                         rng=rng # this raises ConfigurationException
                                          )
 inh_conn = sim.FixedProbabilityConnector(run_params.inh_conn_p,
-                                         #rng=rng # this raiss ConfigurationException
+                                         rng=rng # this raiss ConfigurationException
                                          )
 
 connections = dict(
