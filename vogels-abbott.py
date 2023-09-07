@@ -30,12 +30,12 @@ parser.add_argument('--n_neurons',
 
 parser.add_argument('--exc_conn_p', 
                     type=float,
-                    default=0.05, 
+                    default=0.02, 
                     help='connection probability of excitatory network')
 
 parser.add_argument('--inh_conn_p', 
                     type=float,
-                    default=0.05, 
+                    default=0.02, 
                     help='connection probability of inhibitory network')
 
 parser.add_argument('--duration', 
