@@ -121,9 +121,9 @@ static inline void lif_neuron_closed_form(
 
     // code was edited by djanloo
     REAL alpha = input_this_timestep * neuron->R_membrane + neuron->V_rest;
-    REAL albert = REAL_CONST(1.85);
+    // REAL albert = REAL_CONST(1.001);
     // update membrane voltage
-    neuron->V_membrane = albert * alpha - (neuron->exp_TC * (alpha - V_prev));
+    neuron->V_membrane =  alpha - (neuron->exp_TC * (alpha - V_prev));
 }
 
 //! \brief primary function called in timer loop after synaptic updates
