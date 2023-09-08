@@ -83,7 +83,7 @@ cell_params = dict(tau_m=20.0,# ms
                    v_reset=-60.0,# mV
                    v_thresh=-50.0,# mV
                    
-                   cm=1.0,# µF/cm²
+                   cm=0.2,#1.0,# µF/cm²
                    tau_refrac=5.0,# ms
                    i_offset=0.0,# nA
 
