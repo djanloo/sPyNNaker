@@ -116,7 +116,7 @@ pops['inh'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
 
 uniformDistr = RandomDistribution('uniform', 
                                   [cell_params["v_reset"], cell_params["v_thresh"]], 
-                                  rng=rng # this causes a ConfigurationException
+                                #   rng=rng # this causes a ConfigurationException
                                   )
 
 pops['exc'].initialize(v=uniformDistr)
