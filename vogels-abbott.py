@@ -68,7 +68,7 @@ sim.setup(
     )
 
 rngseed = 98766987
-rng = NumpyRNG(seed=rngseed, parallel_safe=True)
+rng = None, NumpyRNG(seed=rngseed, parallel_safe=True)
 
 
 ################ CELL STUFF ################
