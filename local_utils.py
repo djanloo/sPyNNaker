@@ -82,3 +82,6 @@ def avg_activity(n_neurons, spike_train_list, t_start=50, t_end=None):
     logger.debug(f"average number of spikes in interval [{t_start},{t_end}] ms: \t\t{len(spike_array)/(t_end - t_start):10.2f} spikes/ms")
     logger.debug(f"average activity per neuron in interval [{t_start},{t_end}] ms: \t{len(spike_array)/(t_end - t_start)/n_neurons*1e3:10.2f} spikes/sec")
     return len(spike_array)/(t_end - t_start)/n_neurons
+
+def avg_current(V, ge, gi):
+    return np.mean(V*(ge - gi), axis=0)

@@ -103,7 +103,7 @@ def build_system(run_params):
                                             #  rng=rng # this raises ConfigurationException
                                             )
     inh_conn = sim.FixedProbabilityConnector(run_params['inh_conn_p'],
-                                            #  rng=rng # this raiss ConfigurationException
+                                            #  rng=rng # this raises ConfigurationException
                                             )
 
     connections = dict(

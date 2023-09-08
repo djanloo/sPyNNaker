@@ -3,9 +3,9 @@ import os
 import pickle
 import numpy as np
 from neo import SpikeTrain
+from quantities import mV, nA
 
 import matplotlib.pyplot as plt
-plt.style.use("./style.mplstyle")
 
 from local_utils import get_default_logger, annotate_dict, avg_activity
 from plotting import PlotGroup, DensityPlot, SpikePlot, QuantilePlot
@@ -13,7 +13,7 @@ from plotting import PlotGroup, DensityPlot, SpikePlot, QuantilePlot
 import seaborn as sns
 
 possible_plots = ["quantiles", "density", "spikes"]
-quantities = ["v", "gsyn_exc", "gsyn_inh"]
+quantities = ["v", "gsyn_exc", "gsyn_inh", "I"]
 
 def read_neo_file(file):
     """
@@ -42,6 +42,12 @@ def read_neo_file(file):
     # Spike trains
     results[file, "spikes"] = neo_blocks[0].segments[0].spiketrains
     logger.info(f"In file: {file:40} found signal: spikes")
+
+    # Adds currents
+    results[file, "I"] = (results[file,"v"] - 0*mV)*results[file, 'gsyn_exc'] \
+                        + (results[file, "v"] - (-80*mV))*results[file, 'gsyn_inh']
+    results[file, 'I'] = results[file, 'I'].rescale(nA)
+    logger.debug(f"Current has units {results[file, 'I'].units}")
 
 
 
@@ -81,7 +87,7 @@ def analysis(args):
             conf_dict = dict(config_file="?")
         
         ################################## PLOTTING ##################################
-
+        
         # Spikes & activity
         if "spikes" in args['plot']:
 
@@ -102,7 +108,7 @@ def analysis(args):
                             args['bins'])
 
             # Infos
-            dp.fig.suptitle(fr"$\rho(V, t)$ for {population}")
+            # dp.fig.suptitle(fr"$\rho(V, t)$ for {population}")
             annotate_dict(conf_dict, dp.axes['infos'])
             plot_groups[-1].add_fig(dp)
 

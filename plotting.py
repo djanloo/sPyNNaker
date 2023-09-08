@@ -1,6 +1,8 @@
 import os
 
 import matplotlib.pyplot as plt
+plt.style.use("./style.mplstyle")
+
 from local_utils import get_default_logger, annotate_dict, spiketrains_to_couples
 import numpy as np
 import seaborn as sns
@@ -48,13 +50,13 @@ class QuantilePlot:
             self.axes = axes
             self.fig = fig
 
-        qq = np.quantile(np.array(signal), [.1,.2,.3,.4, .5, .6, .7, .8, .9], axis=1)
+        qq = np.quantile(np.array(signal), [.25, .5, .75 ], axis=1)
         colors = sns.color_palette("Accent", n_colors=qq.shape[0])
 
         for q,c,l in zip(qq, colors, range(1,10)):
             self.axes['analog'].plot(q, color=c,label=f"{l*10}-percentile")
+        self.axes['analog'].plot(np.mean(signal, axis=1), color="k", label=f"mean", ls=":")
         self.axes['analog'].legend(ncols=3, fontsize=8)
-
 
 class DensityPlot:
 
@@ -69,9 +71,6 @@ class DensityPlot:
         else:
             self.axes = axes
             self.fig = fig
-
-        self.axes['analog'].set_xlabel("t [ms]")
-        self.axes['analog'].set_ylabel("V [mV]")
 
         logger.debug(f"signal has shape {signal.shape}")
 
@@ -94,7 +93,10 @@ class DensityPlot:
 
         # Details
         self.axes['analog'].set_xlabel("t [ms]")
-        self.axes['analog'].set_ylabel("V [mV]")
+        self.axes['analog'].set_ylabel(f"[{signal.units}]")
+
+        self.axes['analog'].set_ylim(np.min(np.quantile(signal.magnitude, 0.1, axis=1)), 
+                                     np.max(np.quantile(signal.magnitude, 0.9, axis=1)))
 
 class SpikePlot:
 
