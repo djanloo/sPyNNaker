@@ -373,13 +373,13 @@ domake sPyNNaker/neural_modelling/ clean
 domake sPyNNaker/neural_modelling/
 dosetupinstall sPyNNaker
 
-# sPyNNaker8 is probably outdated
-dosetupinstall sPyNNaker8
-rm sPyNNaker8 -R -f
+# # sPyNNaker8 is probably outdated
+# dosetupinstall sPyNNaker8
+# rm sPyNNaker8 -R -f
 
 ## NOTE: these two are not required for my purposes
-dosetupinstall SpiNNakerGraphFrontEnd
-rm SpiNNakerGraphFrontEnd -R -f
+# dosetupinstall SpiNNakerGraphFrontEnd
+# rm SpiNNakerGraphFrontEnd -R -f
 
 if ["$BUILD_JAVASPINNAKER" = true] ; then
     # Makes the project
