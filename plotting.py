@@ -1,9 +1,11 @@
 import os
 
 import matplotlib.pyplot as plt
-from local_utils import get_default_logger, annotate_dict
+from local_utils import get_default_logger, annotate_dict, spiketrains_to_couples
 import numpy as np
 import seaborn as sns
+
+
 
 logger = get_default_logger("PLOTTING")
 
@@ -112,29 +114,15 @@ class SpikePlot:
             self.fig = fig
             self.axes = axes
         
-        # La SpikeTrainList in un formato [neurone, tempo di spike]
-        spike_array = []
-
-        for neuron_index, spike_train in enumerate(spike_train_list):
-
-            # Generates an array of [n_idx] that is len(spikelist) long
-            neuron_indices = (np.ones(len(spike_train))*neuron_index).astype(int)
-            # Times to numpy
-            spike_times = spike_train.times.magnitude
-            spike_array.append(np.column_stack((neuron_indices, spike_times)))
-
-        spike_array = np.vstack(spike_array)
-        logger.debug(f"Spike arrays have shape {spike_array.shape}")
-        logger.debug(f"Spike arrays are {spike_array}")
-        logger.debug(f"Spike arrays.T are {spike_array.T}")
-
+        spike_array = spiketrains_to_couples(spike_train_list)
         # Spikes
-        self.axes['spikes'].scatter(*(np.flip(spike_array.T)), marker=".", color="k")
+        self.axes['spikes'].scatter(*(np.flip(spike_array.T)), marker=".", color="k", alpha=0.1)
         self.axes['spikes'].set_xlim((spike_train_list.t_start, spike_train_list.t_stop))
 
         # Activity in time
-        act_t = np.histogram(spike_array.T[1], bins=np.linspace(spike_train_list.t_start, spike_train_list.t_stop, n_bins +1), density=True)[0]
+        act_t = np.histogram(spike_array.T[1], bins=np.linspace(spike_train_list.t_start, spike_train_list.t_stop, n_bins +1), density=False)[0]
         self.axes['time_activity'].step(np.linspace(spike_train_list.t_start, spike_train_list.t_stop, n_bins), act_t)
+        self.axes['time_activity'].axhline(np.mean(act_t), ls=":", color='k')
         # Details
         self.axes['time_activity'].set_xlabel("t [ms]")
         self.axes['time_activity'].set_ylabel("PSTH")

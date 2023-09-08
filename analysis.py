@@ -2,11 +2,12 @@ import argparse
 import os
 import pickle
 import numpy as np
+from neo import SpikeTrain
 
 import matplotlib.pyplot as plt
 plt.style.use("./style.mplstyle")
 
-from local_utils import get_default_logger, annotate_dict
+from local_utils import get_default_logger, annotate_dict, avg_activity
 from plotting import PlotGroup, DensityPlot, SpikePlot, QuantilePlot
 
 import seaborn as sns
@@ -60,7 +61,7 @@ def analysis(args):
             read_neo_file(population)
 
         except FileNotFoundError:
-            logger.warning(f"File {file}.pkl does not exist. Skipping.")
+            logger.warning(f"File {population}.pkl does not exist. Skipping.")
             # Skips the file if the file is not found
             continue
         
@@ -85,6 +86,8 @@ def analysis(args):
         if "spikes" in args['plot']:
 
             sp = SpikePlot(results[population, 'spikes'], args['bins'])
+
+            avg_act = avg_activity(conf_dict['n_neurons'], results[population, 'spikes'])
 
             # Infos
             annotate_dict(conf_dict, sp.axes['infos'])
