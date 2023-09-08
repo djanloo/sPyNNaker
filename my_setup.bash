@@ -72,7 +72,9 @@ echoline() {
 }
 
 exit_env () {
-    exit $?
+    pecho $?
+    return
+    # exit $?
 }
 
 
