@@ -17,7 +17,14 @@ def get_sim():
     elif simulator_name == 'neuron':
         pprint("Choosing [green]neuron[/green] as simulator")
         import pyNN.neuron as sim
+    elif simulator_name == 'brian':
+        pprint("Choosing [yellow]brian2[/yellow] as simulator")
+        import pyNN.brian2 as sim
+    elif simulator_name == 'nest':
+        pprint("Choosing [magenta]nest[/magenta] as simulator")
+        import pyNN.nest as sim
     else:
+        raise ValueError(f"Simulator defined in the environment [{simulator_name}] is not implemented")
         pprint("Simulator is not specified by [red]DJANLOO_NEURAL_SIMULATOR[/red]\nDefaulting to [green]neuron[/green]...")
         import pyNN.neuron as sim
 
