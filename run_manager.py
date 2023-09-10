@@ -12,12 +12,12 @@ import numpy as np
 
 from pyNN.random import RandomDistribution
 
+from local_utils import get_sim
+sim = get_sim()
+
 import logging
 from local_utils import set_loggers; set_loggers()
 logger = logging.getLogger("RUNMANAGER")
-
-from local_utils import get_sim
-sim = get_sim()
 
 ################ PREAMBLE: CONSTANTS ################
 
@@ -50,7 +50,6 @@ W_INH = 51.0 *1e-3       # (uS)
 N_THALAMIC_CELLS = 20 
 THALAMIC_STIM_DUR = 50.    # (ms) duration of random stimulation
 THALAMIC_RATE = 100.       # (Hz) frequency of the random stimulation
-
 
 
 ################ RUN SCHEDULER ################
