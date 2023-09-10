@@ -202,7 +202,7 @@ def save(subnet_params_list):
 if __name__ == "__main__":
     
     p_exc_conn = np.linspace(0.02, 0.08, 5)
-    default_subnet_params = dict(n_neurons=500, 
+    default_subnet_params = dict(n_neurons=2000, 
                                  exc_conn_p=0.02, 
                                  inh_conn_p=0.02)
     logger.info(f"Default parameters are:\n{default_subnet_params}")
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     for pexc in p_exc_conn:
         subnet_params = default_subnet_params.copy()
         subnet_params['exc_conn_p'] = pexc
-        subnet_params['idx'] =  hash(pexc)
+        subnet_params['idx'] =  hash(tuple(subnet_params.values()))
         params_list.append(subnet_params)
         logger.info(f"Scheduled run with params {subnet_params}")
 

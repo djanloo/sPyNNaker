@@ -42,6 +42,7 @@ class PlotGroup:
 
 
         for plot in self.plots:
+            logger.info(f"saving plot in {root_folder}/{self.name}/{plot.name}.{fmt}")
             plot.fig.savefig(f"{root_folder}/{self.name}/{plot.name}.{fmt}")
 
 
@@ -104,8 +105,8 @@ class DensityPlot:
         self.axes['analog'].set_xlabel("t [ms]")
         self.axes['analog'].set_ylabel(f"[{signal.units}]")
 
-        self.axes['analog'].set_ylim(np.min(np.quantile(signal.magnitude, 0.1, axis=1)), 
-                                     np.max(np.quantile(signal.magnitude, 0.9, axis=1)))
+        self.axes['analog'].set_ylim(np.min(np.quantile(signal.magnitude, 0.05, axis=1)), 
+                                     np.max(np.quantile(signal.magnitude, 0.95, axis=1)))
 
 class SpikePlot:
 

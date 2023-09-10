@@ -16,9 +16,11 @@ def set_loggers(lvl=logging.DEBUG):
     
     # Sets rich to be the handler of logger
     rich_handler = RichHandler()
-    logging.basicConfig(format='%(message)s', handlers=[rich_handler])
     rich_handler.setFormatter(logging.Formatter(fmt='%(message)s'))
     
+    logging.basicConfig(format='%(message)s', 
+                        handlers=[rich_handler])
+
     # For each logger of the submodules sets the verbosity
     for logger_name in ["ANALYSIS", "PLOTTING", "UTILS", "SIMULATION", "RUNMANAGER"]:
         _ = logging.getLogger(logger_name)

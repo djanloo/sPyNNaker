@@ -108,13 +108,18 @@ def analysis(args):
         # V-density
         if "density" in args['plot']:
 
-            dp = DensityPlot(results[population, args['quantity']], 
-                            args['bins'])
-
-            # Infos
-            # dp.fig.suptitle(fr"$\rho(V, t)$ for {population}")
-            annotate_dict(conf_dict, dp.axes['infos'])
-            plot_groups[-1].add_fig(dp)
+            try:
+                _ = results[population, args['quantity']]
+            except KeyError:
+                logger.warning(f"Plot for population {population} was skipped: population has no {args['quantity']}")
+            else:
+                dp = DensityPlot(results[population, args['quantity']], 
+                                args['bins'])
+                # Infos
+                # dp.fig.suptitle(fr"$\rho(V, t)$ for {population}")
+                annotate_dict(conf_dict, dp.axes['infos'])
+                plot_groups[-1].add_fig(dp)
+            
 
         # Quantiles
         if "quantiles" in args['plot']:
@@ -131,7 +136,7 @@ def analysis(args):
             qp = QuantilePlot(results[population, args['quantity']], fig=fig, axes=axes)
 
     for pg in plot_groups:
-        pg.save(f"{args['folder']}_outputs")
+        pg.save(f"{folder_name}/outputs")
 
     # On the remote server save instead of showing
     if os.environ.get("USER") != "bbpnrsoa":
