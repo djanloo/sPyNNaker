@@ -2,6 +2,10 @@
 /job*
 /LOGS
 
+*.png
+*.pdf
+*.cfg
+
 # Default
 /.project
 /.pydevproject
