@@ -113,11 +113,11 @@ def build_subnetwork(subnet_params):
     exc_conn = sim.FixedProbabilityConnector(subnet_params['exc_conn_p'], 
                                             #  rng=rng # this raises ConfigurationException
                                             )
-    logger.info(f"Initialized [green]excitatory [/green]FixedProbabilityConnector with p = {subnet_params['exc_conn_p']:.3}", extra=dict(markup=True))
+    logger.info(f"Initialized [green]excitatory[/green] FixedProbabilityConnector with p = {subnet_params['exc_conn_p']:.3}", extra=dict(markup=True))
     inh_conn = sim.FixedProbabilityConnector(subnet_params['inh_conn_p'],
                                             #  rng=rng # this raises ConfigurationException
                                             )
-    logger.info(f"Initialized [blue]excitatory [/blue]FixedProbabilityConnector with p = {subnet_params['exc_conn_p']:.3}", extra=dict(markup=True))
+    logger.info(f"Initialized [blue]inhibitory[/blue] FixedProbabilityConnector with p = {subnet_params['exc_conn_p']:.3}", extra=dict(markup=True))
 
     connections = dict(
         
