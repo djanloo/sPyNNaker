@@ -67,6 +67,7 @@ def setup():
         min_delay=DELAY, 
         # max_delay=delay # not supported
         )
+    set_loggers()
 
 def build_subnetwork(subnet_params):
     """Builds a subnetwork based on subnet params"""
