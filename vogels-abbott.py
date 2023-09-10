@@ -12,16 +12,15 @@ import argparse
 
 from pyNN.random import NumpyRNG, RandomDistribution
 
+import logging
+from local_utils import set_loggers; set_loggers()
+logger = logging.getLogger("SIMULATION")
+
 from local_utils import get_sim
 sim = get_sim()
 
-from local_utils import get_default_logger
-logger = get_default_logger("SIMULATION")
-
-
 DT = 1          # (ms) simulation timestep
 DELAY = 2       # (ms) 
-
 
 def build_system(run_params):
     global sim

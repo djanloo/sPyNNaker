@@ -1,27 +1,51 @@
-"""Utility for getting the right simulator, 
-DRY approach"""
+"""Utilities for:
+
+logging,
+simulator choice,
+minor computations
+"""
 
 import os
-import logging
-from rich import print as pprint
 import matplotlib.pyplot as plt
 import numpy as np
+
+import logging
+from rich.logging import RichHandler
+
+def set_loggers(lvl=logging.DEBUG):
+    
+    # Sets rich to be the handler of logger
+    rich_handler = RichHandler()
+    logging.basicConfig(format='%(message)s', handlers=[rich_handler])
+    
+    # For each logger of the submodules sets the verbosity
+    for logger_name in ["ANALYSIS", "PLOTTING", "UTILS", "SIMULATION", "RUNMANAGER"]:
+        _ = logging.getLogger(logger_name)
+        _.setLevel(lvl)
+
+set_loggers()
+logger = logging.getLogger("UTILS")
+
 
 def get_sim():
     # Choice of the simulator is based on environment variables
     simulator_name = os.environ.get("DJANLOO_NEURAL_SIMULATOR")
 
     if simulator_name == "spiNNaker":
-        pprint("choosing [blue]spiNNaker[/blue] as simulator")
+        logger.info("choosing [blue]SPINNAKER[/blue] as simulator",
+                    extra={"markup": True})
         import pyNN.spiNNaker as sim
     elif simulator_name == 'neuron':
-        pprint("Choosing [green]neuron[/green] as simulator")
+        logger.info("Choosing [green]NEURON[/green] as simulator",
+                    extra={"markup": True})
         import pyNN.neuron as sim
     elif simulator_name == 'brian':
-        pprint("Choosing [yellow]brian2[/yellow] as simulator")
+        logger.info("Choosing [yellow]BRIAN2[/yellow] as simulator",
+                    extra={"markup": True})
         import pyNN.brian2 as sim
     elif simulator_name == 'nest':
-        pprint("Choosing [magenta]nest[/magenta] as simulator")
+        logger.info("Choosing [magenta]NEST[/magenta] as simulator",
+                    extra={"markup": True})
         import pyNN.nest as sim
     else:
         raise ValueError(f"Simulator defined in the environment [{simulator_name}] is not implemented")
@@ -30,27 +54,6 @@ def get_sim():
 
     return sim
 
-def get_default_logger(logger_name, lvl=logging.DEBUG):
-    logger = logging.getLogger(logger_name)
-
-    logger.setLevel(logging.DEBUG)
-
-    ch = logging.StreamHandler()
-    formatter = logging.Formatter('%(name)s-%(levelname)s: %(message)s')
-    ch.setFormatter(formatter)
-    ch.setLevel(logging.DEBUG)
-    logger.addHandler(ch)
-    return logger
-
-logger = get_default_logger("UTILIITIES")
-def annotate_dict(dict_, ax):
-    ys = np.linspace(0,1, len(dict_)+2)
-    for key, y in zip(dict_.keys(), ys[1:-1]):
-        ax.annotate(f"{key}={dict_[key]}", (0, y), ha='center')
-    
-    ax.set_xlim(-1,1)
-    ax.set_ylim(0,1)
-    ax.axis('off')
 
 def activity_labeller(spiketrainlist):
 
@@ -73,8 +76,8 @@ def spiketrains_to_couples(spike_train_list):
 
     spike_array = np.vstack(spike_array)
     logger.debug(f"Spike arrays have shape {spike_array.shape}")
-    logger.debug(f"Spike arrays are {spike_array}")
-    logger.debug(f"Spike arrays.T are {spike_array.T}")
+    logger.debug(f"Spike arrays are \n{spike_array}")
+    logger.debug(f"Spike arrays.T are \n{spike_array.T}")
     return spike_array
 
 def avg_activity(n_neurons, spike_train_list, t_start=50, t_end=None):
@@ -85,10 +88,7 @@ def avg_activity(n_neurons, spike_train_list, t_start=50, t_end=None):
 
     # Selects only the ones after burn-in
     spike_array= spike_array[(spike_array[:, 1] > t_start)&(spike_array[:, 1] < t_end)]
-    logger.debug(f"number of spikes in interval [{t_start},{t_end}] ms: \t\t\t{len(spike_array):10}")
-    logger.debug(f"average number of spikes in interval [{t_start},{t_end}] ms: \t\t{len(spike_array)/(t_end - t_start):10.2f} spikes/ms")
-    logger.debug(f"average activity per neuron in interval [{t_start},{t_end}] ms: \t{len(spike_array)/(t_end - t_start)/n_neurons*1e3:10.2f} spikes/sec")
+    logger.info(f"number of spikes in interval [{t_start},{t_end}] ms: \t\t\t{len(spike_array):10}")
+    logger.info(f"average number of spikes in interval [{t_start},{t_end}] ms: \t\t{len(spike_array)/(t_end - t_start):10.2f} spikes/ms")
+    logger.info(f"average activity per neuron in interval [{t_start},{t_end}] ms: \t{len(spike_array)/(t_end - t_start)/n_neurons*1e3:10.2f} spikes/sec")
     return len(spike_array)/(t_end - t_start)/n_neurons
-
-def avg_current(V, ge, gi):
-    return np.mean(V*(ge - gi), axis=0)

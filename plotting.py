@@ -3,13 +3,22 @@ import os
 import matplotlib.pyplot as plt
 plt.style.use("./style.mplstyle")
 
-from local_utils import get_default_logger, annotate_dict, spiketrains_to_couples
+from local_utils import spiketrains_to_couples
 import numpy as np
 import seaborn as sns
+import logging
 
 
+logger = logging.getLogger("PLOTTING")
 
-logger = get_default_logger("PLOTTING")
+def annotate_dict(dict_, ax):
+    ys = np.linspace(0,1, len(dict_)+2)
+    for key, y in zip(dict_.keys(), ys[1:-1]):
+        ax.annotate(f"{key}={dict_[key]}", (0, y), ha='center')
+    
+    ax.set_xlim(-1,1)
+    ax.set_ylim(0,1)
+    ax.axis('off')
 
 class PlotGroup:
 
@@ -81,9 +90,9 @@ class DensityPlot:
         X, Y = np.meshgrid(X,Y)
 
         for time_index in range(len(signal)):
-            hist[:, time_index] = np.log10(np.histogram(signal[time_index], bins=v_bins, density=True)[0])
-
-        hist[~np.isfinite(hist)] = np.min(hist[np.isfinite(hist)])
+            hist[:, time_index] = np.histogram(signal[time_index], bins=v_bins, density=True)[0]
+        hist[hist == 0] = np.min(hist[hist != 0])
+        hist = np.log10(hist)
         logger.info(f"in log density (-np.inf)-valued areas have been replaced with value {np.min(hist[np.isfinite(hist)])}")
         
         cbar = self.fig.colorbar(
@@ -134,7 +143,7 @@ class SpikePlot:
         # Counts how many times each neuron has fired
         fired_neuron_index, n_firings_for_each_neuron = np.unique(spike_array.T[0], return_counts=True)
         logger.debug(f"neurons that fired are {len(fired_neuron_index)} in total")
-        logger.debug(f"neurons firing occurrencies are {n_firings_for_each_neuron}")
+        logger.debug(f"neurons firing occurrencies are \n{n_firings_for_each_neuron}")
         logger.debug(f"completely inactive neurons are {len(spike_train_list) - len(fired_neuron_index)}")
 
         # Adds the counts for those that never fired

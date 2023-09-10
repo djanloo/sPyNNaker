@@ -7,9 +7,10 @@ from quantities import mV, nA
 
 import matplotlib.pyplot as plt
 
-from local_utils import get_default_logger, annotate_dict, avg_activity
+import logging
+from local_utils import  avg_activity, set_loggers
+from plotting import annotate_dict
 from plotting import PlotGroup, DensityPlot, SpikePlot, QuantilePlot
-
 import seaborn as sns
 
 possible_plots = ["quantiles", "density", "spikes"]
@@ -37,17 +38,20 @@ def read_neo_file(file):
     # Analog signals
     for analogsignal in neo_blocks[0].segments[0].analogsignals:
         results[file, analogsignal.name] = analogsignal
-        logger.info(f"In file: {file:40} found signal: {analogsignal.name:20}")
+        logger.info(f"In file: {file:20} found signal: {analogsignal.name:20}")
 
     # Spike trains
     results[file, "spikes"] = neo_blocks[0].segments[0].spiketrains
-    logger.info(f"In file: {file:40} found signal: spikes")
+    logger.info(f"In file: {file:20} found signal: spikes")
 
     # Adds currents
-    results[file, "I"] = (results[file,"v"] - 0*mV)*results[file, 'gsyn_exc'] \
-                        + (results[file, "v"] - (-80*mV))*results[file, 'gsyn_inh']
-    results[file, 'I'] = results[file, 'I'].rescale(nA)
-    logger.debug(f"Current has units {results[file, 'I'].units}")
+    try:
+        results[file, "I"] = (results[file,"v"] - 0*mV)*results[file, 'gsyn_exc'] \
+                            + (results[file, "v"] - (-80*mV))*results[file, 'gsyn_inh']
+        results[file, 'I'] = results[file, 'I'].rescale(nA)
+        logger.debug(f"Current has units {results[file, 'I'].units}")
+    except KeyError:
+        logger.warning(f"Could not determine current for population {file}.")
 
 
 
@@ -57,7 +61,7 @@ def analysis(args):
     results = dict()
     plot_groups = []
 
-    for population in args['populations'][0]:
+    for population in args['pops'][0]:
 
         plot_groups.append(PlotGroup(population))
 
@@ -73,8 +77,8 @@ def analysis(args):
         
         ######################### SIMULATION PARAMETERS #########################
         if args['conf'] is None:
-            config_file = population[:-4]
-            logger.info(f"Configuration file was automatcally set to {config_file}.cfg")
+            config_file = population
+            logger.warning(f"Configuration file was automatically set to {config_file}.cfg")
 
         try:
 
@@ -83,7 +87,7 @@ def analysis(args):
                 logger.info(f"Configuration of the run for {population} is {conf_dict}")
 
         except FileNotFoundError:
-            logger.warning(f"Configuration file not found. Setting empty run informations.")
+            logger.warning(f"Configuration file not found in {folder_name}/{config_file}.cfg. Setting empty run informations.")
             conf_dict = dict(config_file="?")
         
         ################################## PLOTTING ##################################
@@ -127,7 +131,7 @@ def analysis(args):
             qp = QuantilePlot(results[population, args['quantity']], fig=fig, axes=axes)
 
     for pg in plot_groups:
-        pg.save("VA_results_outputs")
+        pg.save(f"{args['folder']}_outputs")
 
     # On the remote server save instead of showing
     if os.environ.get("USER") != "bbpnrsoa":
@@ -138,7 +142,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Analisys of simulation files')
 
 
-    parser.add_argument('--populations', 
+    parser.add_argument('--pops', 
                         nargs='+', action='append',
                         default=None,
                         help='the populations under analysis')
@@ -175,23 +179,28 @@ if __name__=="__main__":
     parser.add_argument('--list_files', 
                         action="store_true",
                         help="list available files")
+    parser.add_argument('--all', 
+                        action='store_true',
+                        help='plots results for each file in the folder')
 
     parser.add_argument('--conf', type=str, default=None, help="the configuration file of the run")
 
     args = parser.parse_args()
 
-    # Sets the verbosity of the logger
-    logger = get_default_logger("ANALYSIS", lvl=args.v)
+    # Gets the logger for here
+    set_loggers(args.v)
+    logger = logging.getLogger("ANALYSIS")
 
     # Strips the backslash from the folder name
     folder_name = args.folder.replace('/', '')
 
-    if args.list_files or args.populations is None:
+    if args.list_files or args.pops is None:
         results=dict()
         files = [f.replace(".pkl", "") for f in os.listdir(folder_name) if f.endswith(".pkl")]
         for file in files:
             read_neo_file(file)
-        exit()
 
-
+    if args.all:
+        args.pops = [[f.replace(".pkl", "") for f in os.listdir(folder_name) if f.endswith(".pkl")]]
+    logger.debug(f"Started analysis with args\n{vars(args)}")
     analysis(vars(args))
