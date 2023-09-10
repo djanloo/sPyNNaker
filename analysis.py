@@ -132,8 +132,12 @@ def analysis(args):
                     fig, axes = None, None
             except IndexError:
                 fig, axes = None, None
-
-            qp = QuantilePlot(results[population, args['quantity']], fig=fig, axes=axes)
+            try:
+                _ = results[population, args['quantity']]
+            except KeyError:
+                logger.warning(f"Plot for population {population} was skipped: population has no {args['quantity']}")
+            else:
+                qp = QuantilePlot(results[population, args['quantity']], fig=fig, axes=axes)
 
     for pg in plot_groups:
         pg.save(f"{folder_name}/outputs")
