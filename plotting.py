@@ -104,7 +104,6 @@ class DensityPlot:
         # Details
         self.axes['analog'].set_xlabel("t [ms]")
         self.axes['analog'].set_ylabel(f"[{signal.units}]")
-
         self.axes['analog'].set_ylim(np.min(np.quantile(signal.magnitude, 0.05, axis=1)), 
                                      np.max(np.quantile(signal.magnitude, 0.95, axis=1)))
 

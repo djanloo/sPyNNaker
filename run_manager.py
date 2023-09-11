@@ -9,223 +9,179 @@ DATE:   04/09/23
 import os
 import pickle
 import numpy as np
+import argparse
 
 from pyNN.random import RandomDistribution
 
-from local_utils import get_sim
+from local_utils import get_sim, num
 sim = get_sim()
 
 import logging
 from local_utils import set_loggers; set_loggers()
 logger = logging.getLogger("RUNMANAGER")
 
-################ PREAMBLE: CONSTANTS ################
 
-DT = 1          # (ms)
-DELAY = 2       # (ms)
-TIMESCALE_FACTOR = 10
+class System:
+    """A system is a collection of populations that can interact only among themselves"""
+    def __init__(self, build_method, dict_of_params):
+        """
+        build_method:           a function that returns the <dict> of populations
+        dict_of_params:         a dictionary {population: parameters}
 
-################ CELL PARAMETERS ################
-CELLTYPE = sim.IF_cond_exp
-CELL_PARAMS = dict(tau_m=20.0,# ms
-                    tau_syn_E=5.0,# ms 
-                    tau_syn_I=10.0,# ms
-                    
-                    v_rest=-60.0,# mV
-                    v_reset=-60.0,# mV
-                    v_thresh=-50.0,# mV
-                    
-                    cm=0.2,#1.0,# µF/cm²
-                    tau_refrac=5.0,# ms
-                    i_offset=0.0,# nA
+        """
+        self.build_method = build_method
+        self.params_dict = dict_of_params
+        self.pops = build_method(dict_of_params)
+        
+        logger.info(f"Successfully created {self} with params\n{self.params_dict}")
 
-                    e_rev_E=0.0,# mV
-                    e_rev_I=-80.0,# mV
-                    )
-################ SYNAPTIC STUFF & CONNECTIONS ################
-W_EXC = 4.0  *1e-3       # (uS)
-W_INH = 51.0 *1e-3       # (uS) 
-
-################ THALAMIC STIMULUS ################
-N_THALAMIC_CELLS = 20 
-THALAMIC_STIM_DUR = 50.    # (ms) duration of random stimulation
-THALAMIC_RATE = 100.       # (Hz) frequency of the random stimulation
-
-
-################ RUN SCHEDULER ################
-global pops
-pops = dict()
-
-def setup():
-    """Sets up the simulation.
+    @property
+    def id(self):
+        tuple_of_params = tuple(self.params_dict.values())
+        # tuple_of_params = tuple([(name, val) for name, val in self.params_dict.items()])
+        return hash(tuple_of_params)
     
-    NOTE: each subnetwork shares with the others the same simulation parameters.
+    def save(self, where):
+        try:
+            os.mkdir(where)
+        except FileExistsError:
+            pass
+
+        try:
+            os.mkdir(f"{where}/{self.id}")
+        except FileExistsError:
+            pass
+        
+        logger.info(f"Saving for {self}")
+
+        for pop in self.pops.keys():
+            self.pops[pop].write_data(f"{where}/{self.id}/{pop}.pkl")
+
+        # Saves the configuration of the run
+        with open(f"{where}/{self.id}/conf.cfg", 'wb') as file:
+            logger.info(f"Saving config file for system {self} population  in {where}/{self.id}/conf.cfg")
+            pickle.dump(self.params_dict, file)
+
+    def __repr__(self):
+        return f"< System {id(self)}>"
+    
+    def __str__(self):
+        return repr(self)
+
+class RunBox:
+    """A container for systems that can be run together, 
+    i.e. ones sharing duration, timescale and timestep.
     """
-    sim.setup(
-        timestep=DT,
-        time_scale_factor=TIMESCALE_FACTOR,
-        min_delay=DELAY, 
-        # max_delay=delay # not supported
-        )
-    set_loggers()
 
-def build_subnetwork(subnet_params):
-    """Builds a subnetwork based on subnet params"""
-    global pops
-    subnet_idx = subnet_params['idx']
-    logger.info(f"Setting subnet with id = {subnet_idx}")
+    def __init__(self, simulator, box_params):
 
-    r_ei = 4.0
-    n_exc = int(round((subnet_params['n_neurons'] * r_ei / (1 + r_ei))))
-    n_inh = subnet_params['n_neurons'] - n_exc
-    logger.info(f"Sub-network has {n_exc} excitatory neurons and {n_inh} inhibitory neurons")
+        self.box_params = box_params
+        logger.info(f"Initialized run box with params: {self.box_params}")
 
-    pops[f'exc_{subnet_idx}'] = sim.Population(
-                                    n_exc, 
-                                    CELLTYPE(**CELL_PARAMS), 
-                                    label=f"exc_cells_{subnet_idx}")
-
-    pops[f'inh_{subnet_idx}'] = sim.Population(
-                                    n_inh, 
-                                    CELLTYPE(**CELL_PARAMS), 
-                                    label=f"inh_cells_{subnet_idx}")
-
-    pops[f'exc_{subnet_idx}'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
-    pops[f'inh_{subnet_idx}'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
-
-
-    uniformDistr = RandomDistribution('uniform', 
-                                    [CELL_PARAMS["v_reset"], CELL_PARAMS["v_thresh"]], 
-                                    #   rng=rng # this causes a ConfigurationException
-                                    )
-
-    pops[f'exc_{subnet_idx}'].initialize(v=uniformDistr)
-    pops[f'inh_{subnet_idx}'].initialize(v=uniformDistr)
-    logger.info("Populations voltages initialized")
-
-    if sim.__name__ == 'pyNN.spiNNaker':
-        logger.info("Setting 50 neurons per core since we are on a spiNNaker machine")
-        sim.set_number_of_neurons_per_core(CELLTYPE, 50)
-
-    exc_synapses = sim.StaticSynapse(weight=W_EXC, delay=DELAY)
-    inh_synapses = sim.StaticSynapse(weight=W_INH, delay=DELAY)
-
-    exc_conn = sim.FixedProbabilityConnector(subnet_params['exc_conn_p'], 
-                                            #  rng=rng # this raises ConfigurationException
-                                            )
-    logger.info(f"Initialized [green]excitatory[/green] FixedProbabilityConnector with p = {subnet_params['exc_conn_p']:.3}", extra=dict(markup=True))
-    inh_conn = sim.FixedProbabilityConnector(subnet_params['inh_conn_p'],
-                                            #  rng=rng # this raises ConfigurationException
-                                            )
-    logger.info(f"Initialized [blue]inhibitory[/blue] FixedProbabilityConnector with p = {subnet_params['exc_conn_p']:.3}", extra=dict(markup=True))
-
-    connections = dict(
+        # Sets the simulator
+        self.sim = simulator
+        self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay']}
+        self.sim.setup(**self.sim_params)
         
-        e2e=sim.Projection(
-                pops[f'exc_{subnet_idx}'],
-                pops[f'exc_{subnet_idx}'], 
-                exc_conn, 
-                receptor_type='excitatory',
-                synapse_type=exc_synapses),
-            
-        e2i=sim.Projection(
-                pops[f'exc_{subnet_idx}'], 
-                pops[f'inh_{subnet_idx}'], 
-                exc_conn, 
-                receptor_type='excitatory',
-                synapse_type=exc_synapses),
-        
-        i2e=sim.Projection(
-                pops[f'inh_{subnet_idx}'], 
-                pops[f'exc_{subnet_idx}'], 
-                inh_conn, 
-                receptor_type='inhibitory',
-                synapse_type=inh_synapses),
-        
-        i2i=sim.Projection(
-                pops[f'inh_{subnet_idx}'],
-                pops[f'inh_{subnet_idx}'],
-                inh_conn, 
-                receptor_type='inhibitory',
-                synapse_type=inh_synapses)
-        
-    )
-    logger.info("Connections Done")
+        if sim.__name__ == 'pyNN.spiNNaker':
+            logger.info("setting 50 neurons per core since we are on a spiNNaker machine")
+            sim.set_number_of_neurons_per_core(sim.IF_cond_exp, 50)
 
-    pops[f'thalamus_{subnet_idx}'] = sim.Population(
-        N_THALAMIC_CELLS, 
-        sim.SpikeSourcePoisson(rate=THALAMIC_RATE, duration=THALAMIC_STIM_DUR),
-        label="expoisson")
-    pops[f'thalamus_{subnet_idx}'].record("spikes")
+        set_loggers()
 
-    rconn = 0.01
-    ext_conn = sim.FixedProbabilityConnector(rconn)
+        self.duration = box_params['duration']
 
-    connections[f'ext2e_{subnet_idx}'] = sim.Projection(
-        pops[f'thalamus_{subnet_idx}'], 
-        pops[f'exc_{subnet_idx}'], 
-        ext_conn, 
-        receptor_type='excitatory',
-        synapse_type=sim.StaticSynapse(weight=0.1))
+        self.systems = []
 
-    connections[f'ext2i_{subnet_idx}'] = sim.Projection(
-        pops[f'thalamus_{subnet_idx}'], 
-        pops[f'inh_{subnet_idx}'], 
-        ext_conn, 
-        receptor_type='excitatory',
-        synapse_type=sim.StaticSynapse(weight=0.1))
+        # For function evaluation
+        self._extraction_couples_list = []
+
+    def add_system(self, system):
+        self.systems.append(system)
     
-    logger.info(f"Thalamic stimulus Done")
+    def add_extraction(self, function, variable_names):
+        self._extraction_couples_list.append(dict(func=function, 
+                                                  vars=variable_names)
+                                            )
+        raise NotImplementedError("TODO")
+    
+    def run(self):
+        logger.info("Running runbox...")
+        self.sim.run(self.duration)
+        logger.info("Simulation Done")
 
-def save(subnet_params_list):
-    global pops
-    try:
-        os.mkdir("RM_results")
-    except FileExistsError:
-        pass
+    def save(self):
+        for system in self.systems:
+            system.save("RMv2")
 
-    for subnet_params in subnet_params_list:
-        subnet_pops = [pn for pn in pops.keys() if pn.endswith(str(subnet_params['idx']))]
-        logger.info(f"Found populations {subnet_pops} for idx={subnet_params['idx']}")
+class RunGatherer:
 
-        # Saves results for the populations
-        for subnet_pop in subnet_pops:
-            logger.info(f"Saving for {subnet_pop}")
-            pops[subnet_pop].write_data(f"RM_results/{subnet_pop}.pkl")
-
-            # Saves the configuration of the run
-            with open(f"RM_results/{subnet_pop}.cfg", 'wb') as file:
-                logger.info(f"Saving config file for subnetwork {subnet_params['idx']} in RM_results/{subnet_pop}.cfg")
-                pickle.dump(subnet_params, file)
+    def __init__(self, folder):
+        self.folder =folder
 
 
 if __name__ == "__main__":
+    # parser = argparse.ArgumentParser(description='Analisys of simulation files')
+
+    # parser.add_argument('--param', default=None, type=str, help="the parameter to scan")
+
+    # parser.add_argument('--values', 
+    #                     nargs='+', action='append',
+    #                     default=None,
+    #                     help='the values of the parameters')
+
+    # args = parser.parse_args()
+
+    # default_subnet_params = dict(n_neurons=200, 
+    #                              exc_conn_p=0.02, 
+    #                              inh_conn_p=0.02)
     
-    p_exc_conn = np.linspace(0.02, 0.08, 5)
-    default_subnet_params = dict(n_neurons=2000, 
-                                 exc_conn_p=0.02, 
-                                 inh_conn_p=0.02)
-    logger.info(f"Default parameters are:\n{default_subnet_params}")
-    logger.info(f"Scanning on exc_conn_p with values = {p_exc_conn}")
-    params_list = []
-    for pexc in p_exc_conn:
-        subnet_params = default_subnet_params.copy()
-        subnet_params['exc_conn_p'] = pexc
-        subnet_params['idx'] =  hash(tuple(subnet_params.values()))
-        params_list.append(subnet_params)
-        logger.info(f"Scheduled run with params {subnet_params}")
+    # logger.info(f"Default parameters are:\n{default_subnet_params}")
+    # logger.info(f"Scanning on {args.param} with values = {args.values[0]}")
 
+    # params_list = []
+    # for v in args.values[0]:
+    #     subnet_params = default_subnet_params.copy()
+    #     subnet_params[args.param] = num(v)
+    #     subnet_params['idx'] =  f"{args.param}_{v}"
+    #     params_list.append(subnet_params)
+    #     logger.info(f"Scheduled run with params {subnet_params}")
 
-    setup()
+    # setup()
 
-    for subnet_params in params_list:
-        build_subnetwork(subnet_params)
+    # for subnet_params in params_list:
+    #     build_subnetwork(subnet_params)
     
-    logger.debug(f"Pops is {pops}")
-    logger.debug(f"Pops keys are {pops.keys()}")
+    # logger.debug(f"Pops is {pops}")
+    # logger.debug(f"Pops keys are {pops.keys()}")
 
-    logger.info("Starting simulation..")
-    sim.run(1000)
-    logger.info("Simulation Done")
+    # logger.info("Starting simulation..")
+    # sim.run(1000)
+    # logger.info("Simulation Done")
 
-    save(params_list)
+    # save(params_list)
+    def build(dict_of_params):
+        pops = dict()
+        for pop in dict_of_params.keys():
+            logger.info(f"building {pop} with params {dict_of_params[pop]}")
+            pops[pop] = "albert"
+        return pops
+
+    dict_of_params = dict(inh=dict(a=1, b=2), 
+                          exc=dict(a=1,b=2), 
+                          thal=dict(a=3, b=6))
+    a = System(build, dict_of_params)
+
+    dict_of_params_2 = dict(inh=dict(a=1, b=2), 
+                          exc=dict(a=1,b=2), 
+                          thal=dict(a=32, b=6))
+    
+    b = System(build, dict_of_params)
+
+    runbox = RunBox(sim, dict(timestep=1, 
+                              time_scale_factor=3, 
+                              duration=5, 
+                              min_delay=2))
+    
+    runbox.run()
+
