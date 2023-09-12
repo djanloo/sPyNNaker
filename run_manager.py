@@ -32,7 +32,7 @@ class System:
         self.build_method = build_method
         self.params_dict = dict_of_params
         self.pops = build_method(dict_of_params)
-        
+    
         logger.info(f"Successfully created {self} with params\n{self.params_dict}")
 
     @property
@@ -62,6 +62,21 @@ class System:
             logger.info(f"Saving config file for system {self} population  in {where}/{self.id}/conf.cfg")
             pickle.dump(self.params_dict, file)
 
+    def extract(self, function):
+        extraction = dict()
+        for pop in self.pops.keys():
+            # test = self.pops[pop].get_v().segments[0].analogsignals
+            # logger.info(f"test is {test}")
+            # logger.info(f"dir(test) is {dir(test)}")
+            try:
+                extraction[pop] = function(self.pops[pop])
+            except Exception as e:
+                logger.error(f"Function evaluation on population <{pop}> raised: {e}")
+                logger.warning(f"Skipping evaluation of <{function.__name__}> on <{pop}>")
+
+        return extraction
+
+
     def __repr__(self):
         return f"< System {id(self)}>"
     
@@ -73,7 +88,7 @@ class RunBox:
     i.e. ones sharing duration, timescale and timestep.
     """
 
-    def __init__(self, simulator, box_params):
+    def __init__(self, simulator, box_params, folder="RMv2"):
 
         self.box_params = box_params
         logger.info(f"Initialized run box with params: {self.box_params}")
@@ -94,16 +109,28 @@ class RunBox:
         self.systems = []
 
         # For function evaluation
-        self._extraction_couples_list = []
+        self._extraction_functions = []
+
+        self.folder = folder
 
     def add_system(self, system):
         self.systems.append(system)
     
-    def add_extraction(self, function, variable_names):
-        self._extraction_couples_list.append(dict(func=function, 
-                                                  vars=variable_names)
-                                            )
-        raise NotImplementedError("TODO")
+    def add_extraction(self, function):
+        """Computes a function of each system
+        
+        To do so, function must take a population as an argument.
+        """
+        self._extraction_functions.append(function)
+    
+    def extract(self):
+        system_extraction = dict()
+        for system in self.systems:
+            for function in self._extraction_functions:
+                logger.debug(f"Extracting <{function.__name__}> from {system}")
+                system_extraction[function.__name__, str(system)] = system.extract(function)
+                logger.debug(f"Got dictionary with keys {system_extraction[function.__name__, str(system)].keys()}")
+        return system_extraction
     
     def run(self):
         logger.info("Running runbox...")
@@ -112,7 +139,7 @@ class RunBox:
 
     def save(self):
         for system in self.systems:
-            system.save("RMv2")
+            system.save(self.folder)
 
 class RunGatherer:
 

@@ -153,7 +153,11 @@ def build_system(system_params):
     return pops
 
 
-default_params = dict(n_neurons=1000, 
+def get_vtrace(pop):
+    return pop.get_v().segments[0].analogsignals[0].magnitude
+
+
+default_params = dict(n_neurons=100, 
                       exc_conn_p=0.02, 
                       inh_conn_p=0.02,
                       synaptic_delay=2)
@@ -161,7 +165,7 @@ default_params = dict(n_neurons=1000,
 a = System(build_system, default_params)
 
 modified_params = default_params.copy()
-modified_params['n_neurons'] = 1500
+modified_params['n_neurons'] = 150
 
 b = System(build_system, modified_params)
 
@@ -173,16 +177,21 @@ runbox = RunBox(sim, dict(timestep=1,
 runbox.add_system(a)
 runbox.add_system(b)
 
+runbox.add_extraction(get_vtrace)
+
 runbox.run()
 runbox.save()
 
-from analysis import runbox_analysis
+results = runbox.extract()
 
-runbox_analysis({'folder': 'RMv2', 
-                 'plot': ['spikes', 'density', 'quantiles'], 
-                 'bins': 30, 
-                 'quantity': 'v', 
-                 'v': 1, 
-                 'list_files': False, 
-                 'all':True, 
-                 'conf': None })
+logger.info(f"results is {results}")
+# from analysis import runbox_analysis
+
+# runbox_analysis({'folder': 'RMv2', 
+#                  'plot': ['spikes', 'density', 'quantiles'], 
+#                  'bins': 30, 
+#                  'quantity': 'v', 
+#                  'v': 1, 
+#                  'list_files': False, 
+#                  'all':True, 
+#                  'conf': None })

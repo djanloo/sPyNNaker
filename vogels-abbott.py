@@ -190,6 +190,18 @@ def save(run_params):
         pickle.dump(run_conf, file)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Vogels-Abbott benchmark')
 
