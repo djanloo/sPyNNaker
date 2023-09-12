@@ -7,6 +7,13 @@ AUTHOR: djanloo
 DATE:   04/09/23
 """
 import numpy as np
+
+import os
+import matplotlib
+
+if os.environ.get("USER") == "bbpnrsoa":
+    matplotlib.use('agg')
+
 import matplotlib.pyplot as plt
 
 from local_utils import get_sim
