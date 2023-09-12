@@ -6,27 +6,21 @@ https://github.com/albertoarturovergani/CNT-2023/blob/main/SpiNNaker/eg_balance-
 AUTHOR: djanloo
 DATE:   04/09/23
 """
-import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 from local_utils import get_sim
 sim = get_sim()
 
-
-
 from run_manager import RunBox, System
-
 from vogels_abbott import build_system
 from local_utils import avg_activity
-
-import matplotlib.pyplot as plt
 
 import logging
 from local_utils import set_loggers;
 
-set_loggers(lvl=logging.WARNING)
-runmgrlog = logging.getLogger("RUN_MANAGER")
-runmgrlog.setLevel(logging.INFO)
+set_loggers(lvl=logging.WARNING) # Sets all loggers to warning
+logging.getLogger("RUN_MANAGER").setLevel(logging.INFO) # Set Run Manager to info
 
 logger = logging.getLogger("APPLICATION")
 
@@ -42,15 +36,16 @@ default_params = dict(n_neurons=100,
                       exc_conn_p=0.02, 
                       inh_conn_p=0.02,
                       synaptic_delay=2)
+
+# Adds a bunch of systems t the runbox
 for _ in range(3):
-    for n in np.arange(600, 680, 15):
+    for n in np.arange(600, 680, 15, dtype=int):
         params = default_params.copy()
         params['n_neurons'] = n
-
         runbox.add_system(System(build_system, params))
 
 # Here I specify which variables I want to compute for each population
-# If the function cannot be avaluated a WARING will be raised
+# If the function cannot be evaluated a WARING will be raised
 def mean_v(pop):
     return np.mean(pop.get_v().segments[0].analogsignals[0].magnitude)
 
