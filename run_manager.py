@@ -27,9 +27,10 @@ from local_utils import get_sim, num
 sim = get_sim()
 
 import logging
-from local_utils import set_loggers; set_loggers()
-logger = logging.getLogger("RUNMANAGER")
+from local_utils import set_loggers;
+set_loggers()
 
+logger = logging.getLogger("RUN_MANAGER")
 
 class System:
     """A system is a collection of populations that can interact only among themselves"""
@@ -48,12 +49,7 @@ class System:
 
     @property
     def id(self):
-        if self._id is None:
-            tuple_of_params = tuple(self.params_dict.values())
-            tuple_of_params += (time.time(),)
-            # tuple_of_params = tuple([(name, val) for name, val in self.params_dict.items()])
-            self._id = hash(tuple_of_params)
-        return self._id
+        return id(self)
 
     def save(self, where):
         try:
@@ -102,7 +98,7 @@ class RunBox:
     i.e. ones sharing duration, timescale and timestep.
     """
 
-    def __init__(self, simulator, box_params, folder="RMv2"):
+    def __init__(self, simulator, folder="RMv2",  **box_params):
 
         self.box_params = box_params
         logger.info(f"Initialized run box with params: {self.box_params}")
@@ -115,8 +111,6 @@ class RunBox:
         if sim.__name__ == 'pyNN.spiNNaker':
             logger.info("setting 50 neurons per core since we are on a spiNNaker machine")
             sim.set_number_of_neurons_per_core(sim.IF_cond_exp, 50)
-
-        set_loggers()
 
         self.duration = box_params['duration']
 
@@ -145,7 +139,7 @@ class RunBox:
         for system_id in self.systems.keys():
             self.extractions[system_id] = dict()
             for function in self._extraction_functions:
-                logger.debug(f"Extracting <{function.__name__}> from {system_id}")
+                logger.debug(f"Extracting <{function.__name__}> from {self.systems[system_id]}")
                 self.extractions[system_id][function.__name__] = self.systems[system_id].extract(function)
                 logger.debug(f"Got dictionary with keys {self.extractions[system_id][function.__name__].keys()}")
     

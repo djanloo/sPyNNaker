@@ -12,22 +12,29 @@ import numpy as np
 from local_utils import get_sim
 sim = get_sim()
 
-import logging
-from local_utils import set_loggers; set_loggers()
+
 
 from run_manager import RunBox, System
-logger = logging.getLogger("mp_va")
 
 from vogels_abbott import build_system
 from local_utils import avg_activity
 
 import matplotlib.pyplot as plt
 
+import logging
+from local_utils import set_loggers;
+
+set_loggers(lvl=logging.WARNING)
+runmgrlog = logging.getLogger("RUN_MANAGER")
+runmgrlog.setLevel(logging.INFO)
+
+logger = logging.getLogger("APPLICATION")
+
 # Defines the RunBox where the systems will be runned on
-runbox = RunBox(sim, dict(timestep=1, 
+runbox = RunBox(sim, timestep=1, 
                     time_scale_factor=10, 
                     duration=1000, 
-                    min_delay=2)
+                    min_delay=2
                 )
 
 # Default parameters of each system
@@ -35,8 +42,8 @@ default_params = dict(n_neurons=100,
                       exc_conn_p=0.02, 
                       inh_conn_p=0.02,
                       synaptic_delay=2)
-for _ in range(2):
-    for n in [100, 300, 600, 750, 900, 1000]:
+for _ in range(3):
+    for n in np.arange(600, 680, 15):
         params = default_params.copy()
         params['n_neurons'] = n
 
@@ -65,6 +72,7 @@ logger.info(f"results is {results}")
 plt.plot(results['n_neurons'], results['final_activity'], marker=".", ls="")
 
 plt.show()
+plt.savefig("runbox_test.png")
 # from analysis import runbox_analysis
 
 # runbox_analysis({'folder': 'RMv2', 
