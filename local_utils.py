@@ -22,7 +22,7 @@ def set_loggers(lvl=logging.DEBUG):
                         handlers=[rich_handler])
 
     # For each logger of the submodules sets the verbosity
-    for logger_name in ["ANALYSIS", "PLOTTING", "UTILS", "SIMULATION", "RUNMANAGER", "mp_va"]:
+    for logger_name in ["ANALYSIS", "PLOTTING", "UTILS", "SIMULATION", "RUNMANAGER", "mp_va", "NETWORK_BUILDING"]:
         _ = logging.getLogger(logger_name)
         
         _.setLevel(lvl)
