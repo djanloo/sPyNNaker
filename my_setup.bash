@@ -268,8 +268,8 @@ echoline CLONING
 if [ "$CLONE_STABLES" = true ] ; then
     gitclone spinnaker_tools &
     gitclone spinn_common &
-    # gitclone SpiNNutils $SPINNUTILS_S &
-    git clone https://github.com/djanloo/SpiNNUtils.git
+    gitclone SpiNNutils $SPINNUTILS_V &
+    # git clone https://github.com/djanloo/SpiNNUtils.git
     gitclone SpiNNMan $SPINNMAN_V &
     gitclone PACMAN $PACMAN_V &
     gitclone spalloc $SPALLOC_V &
