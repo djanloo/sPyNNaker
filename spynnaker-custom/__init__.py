@@ -16,6 +16,3 @@ from spynnaker._version import __version__  # NOQA
 from spynnaker._version import __version_name__  # NOQA
 from spynnaker._version import __version_month__  # NOQA
 from spynnaker._version import __version_year__  # NOQA
-
-# Removed because it conflicts with spalloc (???)
-# print("You are using a custom version of sPyNNaker edited by djanloo")

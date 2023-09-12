@@ -118,12 +118,10 @@ static inline void neuron_model_save_state(neuron_t *state, neuron_params_t *par
 //! \param[in] input_this_timestep: The input to apply
 static inline void lif_neuron_closed_form(
         neuron_t *neuron, REAL V_prev, input_t input_this_timestep) {
-
-    // code was edited by djanloo
     REAL alpha = input_this_timestep * neuron->R_membrane + neuron->V_rest;
-    // REAL albert = REAL_CONST(1.001);
+
     // update membrane voltage
-    neuron->V_membrane =  alpha - (neuron->exp_TC * (alpha - V_prev));
+    neuron->V_membrane = alpha - (neuron->exp_TC * (alpha - V_prev));
 }
 
 //! \brief primary function called in timer loop after synaptic updates
