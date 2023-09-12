@@ -18,8 +18,9 @@ DATE:   12/09/23
 """
 import os
 import pickle
-import numpy as np
+import time
 
+import numpy as np
 from pyNN.random import RandomDistribution
 
 from local_utils import get_sim, num
@@ -41,15 +42,19 @@ class System:
         self.build_method = build_method
         self.params_dict = dict_of_params
         self.pops = build_method(dict_of_params)
-    
+        self._id = None
+
         logger.info(f"Successfully created {self} with params\n{self.params_dict}")
 
     @property
     def id(self):
-        tuple_of_params = tuple(self.params_dict.values())
-        # tuple_of_params = tuple([(name, val) for name, val in self.params_dict.items()])
-        return hash(tuple_of_params)
-    
+        if self._id is None:
+            tuple_of_params = tuple(self.params_dict.values())
+            tuple_of_params += (time.time(),)
+            # tuple_of_params = tuple([(name, val) for name, val in self.params_dict.items()])
+            self._id = hash(tuple_of_params)
+        return self._id
+
     def save(self, where):
         try:
             os.mkdir(where)
@@ -115,7 +120,9 @@ class RunBox:
 
         self.duration = box_params['duration']
 
-        self.systems = []
+        # Dictionary of all the systems of the runbox
+        # Indexed by id
+        self.systems = dict()
 
         # For function evaluation
         self._extraction_functions = []
@@ -123,7 +130,7 @@ class RunBox:
         self.folder = folder
 
     def add_system(self, system):
-        self.systems.append(system)
+        self.systems[system.id] = system
     
     def add_extraction(self, function):
         """Computes a function of each system
@@ -132,25 +139,59 @@ class RunBox:
         """
         self._extraction_functions.append(function)
     
-    def extract(self):
-        system_extraction = dict()
-        for system in self.systems:
+    def _extract(self):
+        logger.info("Staring extraction of functions")
+        self.extractions = dict()
+        for system_id in self.systems.keys():
+            self.extractions[system_id] = dict()
             for function in self._extraction_functions:
-                logger.debug(f"Extracting <{function.__name__}> from {system}")
-                system_extraction[function.__name__, str(system)] = system.extract(function)
-                logger.debug(f"Got dictionary with keys {system_extraction[function.__name__, str(system)].keys()}")
-        return system_extraction
+                logger.debug(f"Extracting <{function.__name__}> from {system_id}")
+                self.extractions[system_id][function.__name__] = self.systems[system_id].extract(function)
+                logger.debug(f"Got dictionary with keys {self.extractions[system_id][function.__name__].keys()}")
     
+    def get_extractions(self):
+        return self.extractions
+
+    def get_extractions_by_param(self, param_name):
+        extractions_by_param = dict()
+        
+        extractions_by_param[param_name] = []
+        extractions_by_param['extractions'] = []
+        
+        for system_id in self.systems.keys():
+            param_value = self.systems[system_id].params_dict[param_name]
+            extractions_by_param[param_name].append(param_value)
+            extractions_by_param['extractions'].append(self.extractions[system_id])
+        return extractions_by_param
+    
+    def get_extraction_couple(self, param_name, population_name, extraction_name):
+
+        extractions_couple = dict()
+        
+        extractions_couple[param_name] = []
+        extractions_couple[extraction_name] = []
+        
+        for system_id in self.systems.keys():
+            param_value = self.systems[system_id].params_dict[param_name]
+            extractions_couple[param_name].append(param_value)
+            extractions_couple[extraction_name].append(self.extractions[system_id][extraction_name][population_name])
+        return extractions_couple
+
     def run(self):
-        logger.info("Running runbox...")
+        total_neurons = [self.systems[system_id].params_dict['n_neurons'] for system_id in self.systems.keys()]
+        total_neurons = np.sum(total_neurons)
+
+        logger.info(f"Running runbox composed of {len(self.systems)} systems ({total_neurons} total neurons) for {self.duration} timesteps")
         self.sim.run(self.duration)
         logger.info("Simulation Done")
+        self._extract()
 
     def save(self):
-        for system in self.systems:
-            system.save(self.folder)
+        for system_id in self.systems.keys():
+            self.systems[system_id].save(self.folder)
 
-class RunGatherer:
 
-    def __init__(self, folder):
-        self.folder =folder
+# class RunGatherer:
+
+#     def __init__(self, folder):
+#         self.folder =folder

@@ -2,7 +2,6 @@ import argparse
 import os
 import pickle
 import numpy as np
-from neo import SpikeTrain
 from quantities import mV, nA
 
 import matplotlib.pyplot as plt
