@@ -1,15 +1,24 @@
-"""Vogels-Abbot benchmark for test on integratos on spiNNaker
+"""A systems of containers for running parameter gridsearch in parallel on SpiNNaker.
 
-This is basically a python version of the jupyter notebook at 
-https://github.com/albertoarturovergani/CNT-2023/blob/main/SpiNNaker/eg_balance-network.ipynb
 
+
+    And blood-black nothingness began to spin
+
+    A system of cells interlinked within
+
+    Cells interlinked within cells interlinked
+
+    Within one stem. And dreadfully distinct
+
+    Against the dark, a tall white fountain played.
+
+    
 AUTHOR: djanloo
-DATE:   04/09/23
+DATE:   12/09/23
 """
 import os
 import pickle
 import numpy as np
-import argparse
 
 from pyNN.random import RandomDistribution
 
@@ -145,70 +154,3 @@ class RunGatherer:
 
     def __init__(self, folder):
         self.folder =folder
-
-
-if __name__ == "__main__":
-    # parser = argparse.ArgumentParser(description='Analisys of simulation files')
-
-    # parser.add_argument('--param', default=None, type=str, help="the parameter to scan")
-
-    # parser.add_argument('--values', 
-    #                     nargs='+', action='append',
-    #                     default=None,
-    #                     help='the values of the parameters')
-
-    # args = parser.parse_args()
-
-    # default_subnet_params = dict(n_neurons=200, 
-    #                              exc_conn_p=0.02, 
-    #                              inh_conn_p=0.02)
-    
-    # logger.info(f"Default parameters are:\n{default_subnet_params}")
-    # logger.info(f"Scanning on {args.param} with values = {args.values[0]}")
-
-    # params_list = []
-    # for v in args.values[0]:
-    #     subnet_params = default_subnet_params.copy()
-    #     subnet_params[args.param] = num(v)
-    #     subnet_params['idx'] =  f"{args.param}_{v}"
-    #     params_list.append(subnet_params)
-    #     logger.info(f"Scheduled run with params {subnet_params}")
-
-    # setup()
-
-    # for subnet_params in params_list:
-    #     build_subnetwork(subnet_params)
-    
-    # logger.debug(f"Pops is {pops}")
-    # logger.debug(f"Pops keys are {pops.keys()}")
-
-    # logger.info("Starting simulation..")
-    # sim.run(1000)
-    # logger.info("Simulation Done")
-
-    # save(params_list)
-    def build(dict_of_params):
-        pops = dict()
-        for pop in dict_of_params.keys():
-            logger.info(f"building {pop} with params {dict_of_params[pop]}")
-            pops[pop] = "albert"
-        return pops
-
-    dict_of_params = dict(inh=dict(a=1, b=2), 
-                          exc=dict(a=1,b=2), 
-                          thal=dict(a=3, b=6))
-    a = System(build, dict_of_params)
-
-    dict_of_params_2 = dict(inh=dict(a=1, b=2), 
-                          exc=dict(a=1,b=2), 
-                          thal=dict(a=32, b=6))
-    
-    b = System(build, dict_of_params)
-
-    runbox = RunBox(sim, dict(timestep=1, 
-                              time_scale_factor=3, 
-                              duration=5, 
-                              min_delay=2))
-    
-    runbox.run()
-
