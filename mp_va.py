@@ -47,7 +47,7 @@ default_params = dict(n_neurons=100,
 
 # Adds a bunch of systems t the runbox
 for _ in range(2):
-    for n in np.arange(800, 1000, 50, dtype=int):
+    for n in np.arange(600, 800, 50, dtype=int):
         params = default_params.copy()
         params['n_neurons'] = n
         runbox.add_system(System(build_system, params))
@@ -55,7 +55,7 @@ for _ in range(2):
 # Here I specify which variables I want to compute for each population
 # If the function cannot be evaluated a WARING will be raised
 def mean_v(pop):
-    return np.mean(pop.get_v().segments[0].analogsignals[0].magnitude)
+    return np.mean(pop.get_data('v').segments[0].analogsignals[0].magnitude)
 
 def final_activity(pop):
     return avg_activity(pop, t_start=500)
