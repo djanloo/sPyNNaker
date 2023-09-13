@@ -64,9 +64,10 @@ def build_system(system_params):
                                     CELLTYPE(**CELL_PARAMS), 
                                     label=f"inh_cells")
 
-    pops[f'exc'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
-    pops[f'inh'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
-
+    # pops[f'exc'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
+    # pops[f'inh'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
+    pops[f'exc'].record(["spikes", 'v'])
+    pops[f'inh'].record(["spikes", 'v'])
 
     uniformDistr = RandomDistribution('uniform', 
                                     [CELL_PARAMS["v_reset"], CELL_PARAMS["v_thresh"]], 
