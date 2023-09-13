@@ -82,8 +82,8 @@ plt.plot(results['exc']['n_neurons'][argsort], results['exc']['final_activity'][
 argsort = np.argsort(results['inh']['n_neurons'])
 plt.plot(results['inh']['n_neurons'][argsort], results['inh']['final_activity'][argsort], marker=".",label = "inhibitory")
 
-plt.show()
 plt.savefig("runbox_test.png")
+plt.show()
 # from analysis import runbox_analysis
 
 # runbox_analysis({'folder': 'RMv2', 
