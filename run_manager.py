@@ -139,10 +139,10 @@ class RunBox:
             self.sim = simulator
             self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay']}
             self.sim.setup(**self.sim_params)
-            
+            self.neurons_per_core = box_params['neurons_per_core']
             if sim.__name__ == 'pyNN.spiNNaker':
                 logger.info("setting 50 neurons per core since we are on a spiNNaker machine")
-                sim.set_number_of_neurons_per_core(sim.IF_cond_exp, 50)
+                sim.set_number_of_neurons_per_core(sim.IF_cond_exp, self.neurons_per_core)
         
         try:
             self.duration = box_params['duration']
