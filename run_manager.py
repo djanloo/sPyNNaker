@@ -170,7 +170,7 @@ class RunBox:
         self._extraction_functions.append(function)
     
     def _extract(self):
-        logger.info("Staring extraction of functions")
+        logger.info("Starting functions extraction")
         self.extractions = dict()
         for system_id in self.systems.keys():
             self.extractions[system_id] = dict()

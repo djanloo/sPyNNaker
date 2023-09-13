@@ -15,6 +15,7 @@ if os.environ.get("USER") == "bbpnrsoa":
     matplotlib.use('agg')
 
 import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 
 from local_utils import get_sim
 sim = get_sim()
@@ -45,9 +46,12 @@ default_params = dict(n_neurons=800,
                       inh_conn_p=0.02,
                       synaptic_delay=2)
 
+
+min_conn, max_conn = 0.01, 0.03
+
 # Adds a bunch of systems t the runbox
-for exc_conn_p in np.linspace(1.0/100, 5.0/100, 5):
-    for inh_conn_p in np.linspace(1.0/100, 5.0/100, 5):
+for exc_conn_p in np.linspace(min_conn, max_conn, 3):
+    for inh_conn_p in np.linspace(min_conn, max_conn, 3):
         params = default_params.copy()
 
         params['exc_conn_p'] = exc_conn_p
@@ -61,7 +65,7 @@ def mean_v(pop):
     return np.mean(pop.get_data('v').segments[0].analogsignals[0].magnitude)
 
 def final_activity(pop):
-    return avg_activity(pop, t_start=500)
+    return avg_activity(pop, t_start=100)
 
 # Here I tell the RunBox to extract mean_v for each population for each system
 runbox.add_extraction(mean_v)
@@ -76,25 +80,20 @@ runbox.save()
 results = runbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", "final_activity")
 
 logger.info(f"results is {results}")
-# argsort = np.argsort(results['exc']['exc'])
-# logger.debug(f"Argsort is {argsort}")
-# plt.plot(results['exc']['n_neurons'][argsort], results['exc']['final_activity'][argsort], marker=".",label = "excitatory")
 
-# argsort = np.argsort(results['inh']['n_neurons'])
-# plt.plot(results['inh']['n_neurons'][argsort], results['inh']['final_activity'][argsort], marker=".",label = "inhibitory")
 
-plt.scatter(*(results['exc']['exc_conn_p', 'inh_conn_p'].T), c = results['exc']['final_activity'], cmap='viridis')
+# Create grid values first.
+xi = np.linspace(min_conn, max_conn, 4)
+yi = np.linspace(min_conn, max_conn, 4)
 
+# Linearly interpolate the data (x, y) on a grid defined by (xi, yi).
+triang = tri.Triangulation(*(results['exc']['exc_conn_p', 'inh_conn_p'].T))
+interpolator = tri.LinearTriInterpolator(triang, results['exc']['final_activity'])
+Xi, Yi = np.meshgrid(xi, yi)
+zi = interpolator(Xi, Yi)
+plt.contourf(Xi,Yi,zi)
+logger.info(zi)
+plt.colorbar()
 
 plt.savefig("runbox_test.png")
 plt.show()
-# from analysis import runbox_analysis
-
-# runbox_analysis({'folder': 'RMv2', 
-#                  'plot': ['spikes', 'density', 'quantiles'], 
-#                  'bins': 30, 
-#                  'quantity': 'v', 
-#                  'v': 1, 
-#                  'list_files': False, 
-#                  'all':True, 
-#                  'conf': None })
