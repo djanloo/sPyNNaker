@@ -100,6 +100,22 @@ def avg_activity(population, t_start=50, t_end=None):
     logger.info(f"average activity per neuron in interval [{t_start},{t_end}] ms: \t{len(spike_array)/(t_end - t_start)/n_neurons*1e3:10.2f} spikes/sec")
     return len(spike_array)/(t_end - t_start)/n_neurons*1e3
 
+def avg_activity_by_spiketrains(n_neurons, spike_train_list, t_start=50, t_end=None):
+
+    # spike_train_list = population.getSpikes().segments[0].spiketrains
+    # n_neurons = population.get_data().annotations['size']
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
+    spike_array = spiketrains_to_couples(spike_train_list)
+
+    # Selects only the ones after burn-in
+    spike_array= spike_array[(spike_array[:, 1] > t_start)&(spike_array[:, 1] < t_end)]
+    logger.info(f"number of spikes in interval [{t_start},{t_end}] ms: \t\t\t{len(spike_array):10}")
+    logger.info(f"average number of spikes in interval [{t_start},{t_end}] ms: \t\t{len(spike_array)/(t_end - t_start):10.2f} spikes/ms")
+    logger.info(f"average activity per neuron in interval [{t_start},{t_end}] ms: \t{len(spike_array)/(t_end - t_start)/n_neurons*1e3:10.2f} spikes/sec")
+    return len(spike_array)/(t_end - t_start)/n_neurons*1e3
+
 def num(s):
     try:
         return int(s)

@@ -30,6 +30,7 @@ set_loggers(lvl=logging.WARNING) # Sets all loggers to warning
 logging.getLogger("RUN_MANAGER").setLevel(logging.INFO) # Set Run Manager to info
 
 logger = logging.getLogger("APPLICATION")
+logger.setLevel(logging.DEBUG)
 
 # Defines the RunBox where the systems will be runned on
 runbox = RunBox(sim, timestep=1, 
@@ -45,8 +46,8 @@ default_params = dict(n_neurons=100,
                       synaptic_delay=2)
 
 # Adds a bunch of systems t the runbox
-for _ in range(3):
-    for n in np.arange(600, 680, 15, dtype=int):
+for _ in range(2):
+    for n in np.arange(800, 1000, 50, dtype=int):
         params = default_params.copy()
         params['n_neurons'] = n
         runbox.add_system(System(build_system, params))
@@ -66,12 +67,20 @@ runbox.add_extraction(final_activity)
 # Start the simulation & save
 runbox.run()
 runbox.save()
+# runbox = RunBox.from_folder("RMv2")
+
+
 
 # Extract the data in a format system_id -> function -> population -> values
-results = runbox.get_extraction_couple("n_neurons", "exc", "final_activity")
+results = runbox.get_extraction_couples("n_neurons", "final_activity")
 
 logger.info(f"results is {results}")
-plt.plot(results['n_neurons'], results['final_activity'], marker=".", ls="")
+argsort = np.argsort(results['exc']['n_neurons'])
+logger.debug(f"Argsort is {argsort}")
+plt.plot(results['exc']['n_neurons'][argsort], results['exc']['final_activity'][argsort], marker=".",label = "excitatory")
+
+argsort = np.argsort(results['inh']['n_neurons'])
+plt.plot(results['inh']['n_neurons'][argsort], results['inh']['final_activity'][argsort], marker=".",label = "inhibitory")
 
 plt.show()
 plt.savefig("runbox_test.png")

@@ -42,14 +42,25 @@ class System:
         """
         self.build_method = build_method
         self.params_dict = dict_of_params
-        self.pops = build_method(dict_of_params)
+        if build_method is not None:
+            self.pops = build_method(dict_of_params)
+        else:
+            logger.warning("System was initialized without build method")
+            self.pops = dict()
         self._id = None
 
         logger.info(f"Successfully created {self} with params\n{self.params_dict}")
 
     @property
     def id(self):
-        return id(self)
+        if self._id is None:
+            self._id = id(self)
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        logger.warning(f"Id of {self} was forcefully changed to {value}")
+        self._id = value
 
     def save(self, where):
         try:
@@ -88,10 +99,26 @@ class System:
 
 
     def __repr__(self):
-        return f"< System {id(self)}>"
+        return f"<System {self.id}>"
     
     def __str__(self):
         return repr(self)
+    
+    @classmethod
+    def from_folder(cls, folder):
+        sys = cls(None, None)
+        sys.id = num(os.path.basename(folder))
+
+        with open(f"{folder}/conf.cfg", "rb") as confile:
+            sys.params_dict = pickle.load(confile)
+        
+        pop_names = [f.replace(".pkl", "") for f in os.listdir(folder) if f.endswith(".pkl")]
+        
+        for pop in pop_names:
+            with open(f"{folder}/{pop}.pkl", "rb") as popfile:
+                sys.pops[pop] = pickle.load(popfile)
+                logger.info(f"{sys}: added population <{pop}>")
+        return sys
 
 class RunBox:
     """A container for systems that can be run together, 
@@ -104,15 +131,20 @@ class RunBox:
         logger.info(f"Initialized run box with params: {self.box_params}")
 
         # Sets the simulator
-        self.sim = simulator
-        self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay']}
-        self.sim.setup(**self.sim_params)
+        if simulator is not None:
+            self.sim = simulator
+            self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay']}
+            self.sim.setup(**self.sim_params)
+            
+            if sim.__name__ == 'pyNN.spiNNaker':
+                logger.info("setting 50 neurons per core since we are on a spiNNaker machine")
+                sim.set_number_of_neurons_per_core(sim.IF_cond_exp, 50)
         
-        if sim.__name__ == 'pyNN.spiNNaker':
-            logger.info("setting 50 neurons per core since we are on a spiNNaker machine")
-            sim.set_number_of_neurons_per_core(sim.IF_cond_exp, 50)
-
-        self.duration = box_params['duration']
+        try:
+            self.duration = box_params['duration']
+        except KeyError as e:
+            logger.warning("DUration of the runbox was not set")
+            self.duration = None
 
         # Dictionary of all the systems of the runbox
         # Indexed by id
@@ -143,33 +175,34 @@ class RunBox:
                 self.extractions[system_id][function.__name__] = self.systems[system_id].extract(function)
                 logger.debug(f"Got dictionary with keys {self.extractions[system_id][function.__name__].keys()}")
     
-    def get_extractions(self):
-        return self.extractions
+    def get_extraction_couples(self, param=None, extraction=None):
 
-    def get_extractions_by_param(self, param_name):
-        extractions_by_param = dict()
-        
-        extractions_by_param[param_name] = []
-        extractions_by_param['extractions'] = []
-        
-        for system_id in self.systems.keys():
-            param_value = self.systems[system_id].params_dict[param_name]
-            extractions_by_param[param_name].append(param_value)
-            extractions_by_param['extractions'].append(self.extractions[system_id])
-        return extractions_by_param
-    
-    def get_extraction_couple(self, param_name, population_name, extraction_name):
+        extractions_for_each_population = dict()
 
-        extractions_couple = dict()
-        
-        extractions_couple[param_name] = []
-        extractions_couple[extraction_name] = []
-        
+        # Let me assume that each system has the same populations
         for system_id in self.systems.keys():
-            param_value = self.systems[system_id].params_dict[param_name]
-            extractions_couple[param_name].append(param_value)
-            extractions_couple[extraction_name].append(self.extractions[system_id][extraction_name][population_name])
-        return extractions_couple
+            pops = self.extractions[system_id][extraction].keys()
+            break
+        
+        logger.info(f"Getting extraction couple ({param}, {extraction}) for populations {list(pops)}")
+
+        for pop in pops:
+            extractions_couple = dict()
+            
+            extractions_couple[param] = []
+            extractions_couple[extraction] = []
+            
+            for system_id in self.systems.keys():
+                param_value = self.systems[system_id].params_dict[param]
+                extractions_couple[param].append(param_value)
+                extractions_couple[extraction].append(self.extractions[system_id][extraction][pop])
+
+            argsort = np.argsort(extractions_couple[param])
+            extractions_couple[param] = np.array(extractions_couple[param])[argsort]
+            extractions_couple[extraction] = np.array(extractions_couple[extraction])[argsort]
+
+            extractions_for_each_population[pop] = extractions_couple
+        return extractions_for_each_population
 
     def run(self):
         total_neurons = [self.systems[system_id].params_dict['n_neurons'] for system_id in self.systems.keys()]
@@ -183,9 +216,29 @@ class RunBox:
     def save(self):
         for system_id in self.systems.keys():
             self.systems[system_id].save(self.folder)
+        
+        with open(f"{self.folder}/extractions.pkl", "wb") as extr_file:
+            logger.info("saving RunBox extractions")
+            pickle.dump(self.extractions, extr_file)
 
+        with open(f"{self.folder}/runbox_conf.pkl", "wb") as boxpar_file:
+            logger.info("saving RunBox configuration")
+            pickle.dump(self.box_params, boxpar_file)
+    
+    @classmethod
+    def from_folder(cls, folder):
+        runbox = cls(None, folder=folder)
+        
+        with open(f"{folder}/extractions.pkl", "rb") as extr_file:
+            logger.info("RunBox: loading extractions")
+            runbox.extractions = pickle.load(extr_file)
 
-# class RunGatherer:
+        subfolders = [ f.path for f in os.scandir(folder) if f.is_dir() ]
 
-#     def __init__(self, folder):
-#         self.folder =folder
+        logger.info(f"Found {len(subfolders)} subfolders to analyse in {folder}: {subfolders}")
+        for subfolder in subfolders:
+            logger.info(f"RunBox: loading system from folder {subfolder}")
+            sys = System.from_folder(f"{subfolder}")
+            runbox.add_system(sys)
+
+        return runbox

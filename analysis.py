@@ -7,7 +7,7 @@ from quantities import mV, nA
 import matplotlib.pyplot as plt
 
 import logging
-from local_utils import  avg_activity, set_loggers
+from local_utils import  avg_activity_by_spiketrains, set_loggers
 from plotting import annotate_dict
 from plotting import PlotGroup, DensityPlot, SpikePlot, QuantilePlot
 import seaborn as sns
@@ -98,7 +98,7 @@ def system_analysis(args):
 
             sp = SpikePlot(data[population, 'spikes'], args['bins'])
 
-            avg_act = avg_activity(conf_dict['n_neurons'], data[population, 'spikes'])
+            avg_act = avg_activity_by_spiketrains(conf_dict['n_neurons'], data[population, 'spikes'])
 
             # Infos
             annotate_dict(conf_dict, sp.axes['infos'])
@@ -225,4 +225,4 @@ if __name__=="__main__":
             read_neo_file(file)
 
 
-    system_analysis(vars(args))
+    runbox_analysis(vars(args))
