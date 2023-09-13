@@ -86,7 +86,7 @@ def spiketrains_to_couples(spike_train_list):
 
 def avg_activity(population, t_start=50, t_end=None):
 
-    spike_train_list = population.getSpikes().segments[0].spiketrains
+    spike_train_list = population.get_data('spikes').segments[0].spiketrains
     n_neurons = population.get_data().annotations['size']
     if t_end is None:
         t_end = spike_train_list.t_stop.magnitude
