@@ -22,6 +22,7 @@ import time
 
 import numpy as np
 from pyNN.random import RandomDistribution
+from spinn_front_end_common.utilities.exceptions import ConfigurationException
 
 from local_utils import get_sim, num
 sim = get_sim()
@@ -76,7 +77,10 @@ class System:
         logger.info(f"Saving for {self}")
 
         for pop in self.pops.keys():
-            self.pops[pop].write_data(f"{where}/{self.id}/{pop}.pkl")
+            try:
+                self.pops[pop].write_data(f"{where}/{self.id}/{pop}.pkl")
+            except ConfigurationException as e:
+                logger.error(f"Saving population <{pop}> raised an error: {e}")
 
         # Saves the configuration of the run
         with open(f"{where}/{self.id}/conf.cfg", 'wb') as file:
