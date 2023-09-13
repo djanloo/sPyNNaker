@@ -34,7 +34,7 @@ logger.setLevel(logging.DEBUG)
 
 # Defines the RunBox where the systems will be runned on
 runbox = RunBox(sim, timestep=1, 
-                    time_scale_factor=10, 
+                    time_scale_factor=50, 
                     duration=1000, 
                     min_delay=2
                 )

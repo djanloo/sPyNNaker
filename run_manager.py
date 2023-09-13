@@ -208,9 +208,12 @@ class RunBox:
         total_neurons = [self.systems[system_id].params_dict['n_neurons'] for system_id in self.systems.keys()]
         total_neurons = np.sum(total_neurons)
 
+
         logger.info(f"Running runbox composed of {len(self.systems)} systems ({total_neurons} total neurons) for {self.duration} timesteps")
+        start = time.perf_counter()
         self.sim.run(self.duration)
-        logger.info("Simulation Done")
+        self._run_time = time.perf_counter() - start
+        logger.info(f"Simulation took in {self._run_time} seconds")
         self._extract()
 
     def save(self):
