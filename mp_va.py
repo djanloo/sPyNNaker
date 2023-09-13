@@ -33,11 +33,16 @@ logging.getLogger("RUN_MANAGER").setLevel(logging.INFO) # Set Run Manager to inf
 logger = logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
+
+min_conn, max_conn = 0.01, 0.03
+N = 7
+
 # Defines the RunBox where the systems will be runned on
 runbox = RunBox(sim, timestep=1, 
                     time_scale_factor=50, 
                     duration=1000, 
-                    min_delay=2
+                    min_delay=2,
+                    neurons_per_core=250
                 )
 
 # Default parameters of each system
@@ -47,11 +52,9 @@ default_params = dict(n_neurons=800,
                       synaptic_delay=2)
 
 
-min_conn, max_conn = 0.01, 0.03
-
 # Adds a bunch of systems t the runbox
-for exc_conn_p in np.linspace(min_conn, max_conn, 3):
-    for inh_conn_p in np.linspace(min_conn, max_conn, 3):
+for exc_conn_p in np.linspace(min_conn, max_conn, N):
+    for inh_conn_p in np.linspace(min_conn, max_conn, N):
         params = default_params.copy()
 
         params['exc_conn_p'] = exc_conn_p
@@ -83,17 +86,21 @@ logger.info(f"results is {results}")
 
 
 # Create grid values first.
-xi = np.linspace(min_conn, max_conn, 4)
-yi = np.linspace(min_conn, max_conn, 4)
+xi = np.linspace(min_conn, max_conn, N)
+yi = np.linspace(min_conn, max_conn, N)
 
 # Linearly interpolate the data (x, y) on a grid defined by (xi, yi).
 triang = tri.Triangulation(*(results['exc']['exc_conn_p', 'inh_conn_p'].T))
 interpolator = tri.LinearTriInterpolator(triang, results['exc']['final_activity'])
 Xi, Yi = np.meshgrid(xi, yi)
 zi = interpolator(Xi, Yi)
-plt.contourf(Xi,Yi,zi)
+plt.contourf(Xi,Yi,zi, levels=np.linspace(-0.1, 80, 20))
 logger.info(zi)
 plt.colorbar()
+
+plt.scatter(*(results['exc']['exc_conn_p', 'inh_conn_p'].T), 
+            c=results['exc']['final_activity'], edgecolor="k")
+
 
 plt.savefig("runbox_test.png")
 plt.show()
