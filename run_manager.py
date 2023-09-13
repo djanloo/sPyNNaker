@@ -203,6 +203,37 @@ class RunBox:
 
             extractions_for_each_population[pop] = extractions_couple
         return extractions_for_each_population
+    
+    def get_extraction_triplets(self, param1=None, param2=None, extraction=None):
+
+        extractions_for_each_population = dict()
+
+        # Let me assume that each system has the same populations
+        for system_id in self.systems.keys():
+            pops = self.extractions[system_id][extraction].keys()
+            break
+        
+        logger.info(f"Getting extraction triplets ({param1}, {param2}, {extraction}) for populations {list(pops)}")
+
+        for pop in pops:
+            extraction_triplet = dict()
+            
+            extraction_triplet[param1, param2] = []
+            extraction_triplet[extraction] = []
+            
+            for system_id in self.systems.keys():
+
+                param1_value = self.systems[system_id].params_dict[param1]
+                param2_value = self.systems[system_id].params_dict[param2]
+                extraction_triplet[param1, param2].append([param1_value, param2_value])
+
+                extraction_triplet[extraction].append(self.extractions[system_id][extraction][pop])
+
+            extraction_triplet[param1, param2] = np.array(extraction_triplet[param1, param2])
+            extraction_triplet[extraction] = np.array(extraction_triplet[extraction])
+
+            extractions_for_each_population[pop] = extraction_triplet
+        return extractions_for_each_population
 
     def run(self):
         total_neurons = [self.systems[system_id].params_dict['n_neurons'] for system_id in self.systems.keys()]

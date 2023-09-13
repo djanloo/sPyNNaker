@@ -40,16 +40,19 @@ runbox = RunBox(sim, timestep=1,
                 )
 
 # Default parameters of each system
-default_params = dict(n_neurons=100, 
+default_params = dict(n_neurons=800, 
                       exc_conn_p=0.02, 
                       inh_conn_p=0.02,
                       synaptic_delay=2)
 
 # Adds a bunch of systems t the runbox
-for _ in range(2):
-    for n in np.arange(600, 800, 50, dtype=int):
+for exc_conn_p in np.linspace(1.0/100, 5.0/100, 5):
+    for inh_conn_p in np.linspace(1.0/100, 5.0/100, 5):
         params = default_params.copy()
-        params['n_neurons'] = n
+
+        params['exc_conn_p'] = exc_conn_p
+        params['inh_conn_p'] = inh_conn_p
+
         runbox.add_system(System(build_system, params))
 
 # Here I specify which variables I want to compute for each population
@@ -69,18 +72,19 @@ runbox.run()
 runbox.save()
 # runbox = RunBox.from_folder("RMv2")
 
-
-
 # Extract the data in a format system_id -> function -> population -> values
-results = runbox.get_extraction_couples("n_neurons", "final_activity")
+results = runbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", "final_activity")
 
 logger.info(f"results is {results}")
-argsort = np.argsort(results['exc']['n_neurons'])
-logger.debug(f"Argsort is {argsort}")
-plt.plot(results['exc']['n_neurons'][argsort], results['exc']['final_activity'][argsort], marker=".",label = "excitatory")
+# argsort = np.argsort(results['exc']['exc'])
+# logger.debug(f"Argsort is {argsort}")
+# plt.plot(results['exc']['n_neurons'][argsort], results['exc']['final_activity'][argsort], marker=".",label = "excitatory")
 
-argsort = np.argsort(results['inh']['n_neurons'])
-plt.plot(results['inh']['n_neurons'][argsort], results['inh']['final_activity'][argsort], marker=".",label = "inhibitory")
+# argsort = np.argsort(results['inh']['n_neurons'])
+# plt.plot(results['inh']['n_neurons'][argsort], results['inh']['final_activity'][argsort], marker=".",label = "inhibitory")
+
+plt.scatter(*(results['exc']['exc_conn_p', 'inh_conn_p'].T), c = results['exc']['final_activity'], cmap='viridis')
+
 
 plt.savefig("runbox_test.png")
 plt.show()

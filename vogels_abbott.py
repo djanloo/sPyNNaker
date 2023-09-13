@@ -126,7 +126,7 @@ def build_system(system_params):
         N_THALAMIC_CELLS, 
         sim.SpikeSourcePoisson(rate=THALAMIC_RATE, duration=THALAMIC_STIM_DUR),
         label="expoisson")
-    pops[f'thalamus'].record("spikes")
+    # pops[f'thalamus'].record("spikes")
 
     rconn = 0.01
     ext_conn = sim.FixedProbabilityConnector(rconn)
