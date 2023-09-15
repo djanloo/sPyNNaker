@@ -111,8 +111,13 @@ class System:
     @classmethod
     def from_folder(cls, folder):
         sys = cls(None, None)
-        sys.id = num(os.path.basename(folder))
-
+        try:
+            sys.id = num(os.path.basename(folder))
+        except ValueError as e:
+            msg = f"Folder {folder} has not an appropriate name, raised: {e}"
+            logger.warning(msg)
+            raise ValueError(msg)
+        
         with open(f"{folder}/conf.cfg", "rb") as confile:
             sys.params_dict = pickle.load(confile)
         
@@ -276,7 +281,10 @@ class RunBox:
         logger.info(f"Found {len(subfolders)} subfolders to analyse in {folder}: {subfolders}")
         for subfolder in subfolders:
             logger.info(f"RunBox: loading system from folder {subfolder}")
-            sys = System.from_folder(f"{subfolder}")
-            runbox.add_system(sys)
+            try:
+                sys = System.from_folder(f"{subfolder}")
+                runbox.add_system(sys)
+            except ValueError as e:
+                logger.warning(f"System in directory {subfolder} was skipped.")
 
         return runbox
