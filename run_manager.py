@@ -177,18 +177,6 @@ class RunBox:
 
     def _extract(self):
 
-        t1 = perf_counter()
-        pool = mp.Pool()
-
-        for function in self._extraction_functions:
-            ext = lambda x: x.extract(function)
-            results = pool.map(ext, self.systems.values())
-
-        pool.close()
-        pool.join()
-
-        t2 = perf_counter()
-
         logger.info("Starting functions extraction")
         self.extractions = dict()
         for system_id in self.systems.keys():
@@ -197,9 +185,6 @@ class RunBox:
                 logger.debug(f"Extracting <{function.__name__}> from {self.systems[system_id]}")
                 self.extractions[system_id][function.__name__] = self.systems[system_id].extract(function)
                 logger.debug(f"Got dictionary with keys {self.extractions[system_id][function.__name__].keys()}")
-        t3 = perf_counter()
-
-        logger.info(f"Extraction:\n parallel={t2-t1}, normal={t3-t2}")
     
     def get_extraction_couples(self, param=None, extraction=None):
 
