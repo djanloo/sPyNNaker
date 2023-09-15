@@ -29,20 +29,22 @@ from local_utils import set_loggers;
 
 set_loggers(lvl=logging.WARNING) # Sets all loggers to warning
 logging.getLogger("RUN_MANAGER").setLevel(logging.INFO) # Set Run Manager to info
-logging.getLogger("NETWORK_BUILDING".setLevel(logging.INFO))
+logging.getLogger("NETWORK_BUILDING").setLevel(logging.INFO)
+logging.getLogger("UTILS").setLevel(logging.DEBUG)
 
 logger = logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
 min_conn, max_conn = 0.01, 0.03
-N = 7
+N = 4
 
 # Defines the RunBox where the systems will be runned on
 runbox = RunBox(sim, timestep=1, 
                     time_scale_factor=50, 
                     duration=1000, 
                     min_delay=2,
-                    neurons_per_core=250
+                    neurons_per_core=250,
+                    folder="testRM"
                 )
 
 # Default parameters of each system
@@ -83,28 +85,32 @@ runbox.run()
 runbox.save()
 # runbox = RunBox.from_folder("RMv2")
 
-# Extract the data in a format system_id -> function -> population -> values
-results = runbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", "final_activity")
+for extraction in ["final_isi_cv", "final_activity"]:
+    plt.figure()
+    # Extract the data in a format system_id -> function -> population -> values
+    results = runbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", extraction)
 
-logger.info(f"results is {results}")
-
-
-# Create grid values first.
-xi = np.linspace(min_conn, max_conn, N)
-yi = np.linspace(min_conn, max_conn, N)
-
-# Linearly interpolate the data (x, y) on a grid defined by (xi, yi).
-triang = tri.Triangulation(*(results['exc']['exc_conn_p', 'inh_conn_p'].T))
-interpolator = tri.LinearTriInterpolator(triang, results['exc']['final_activity'])
-Xi, Yi = np.meshgrid(xi, yi)
-zi = interpolator(Xi, Yi)
-plt.contourf(Xi,Yi,zi, levels=np.linspace(-0.1, 80, 20))
-logger.info(zi)
-plt.colorbar()
-
-plt.scatter(*(results['exc']['exc_conn_p', 'inh_conn_p'].T), 
-            c=results['exc']['final_activity'], edgecolor="k")
+    logger.info(f"results is {results}")
 
 
-plt.savefig("runbox_test.png")
+    # Create grid values first.
+    xi = np.linspace(min_conn, max_conn, N)
+    yi = np.linspace(min_conn, max_conn, N)
+
+    # Linearly interpolate the data (x, y) on a grid defined by (xi, yi).
+    triang = tri.Triangulation(*(results['exc']['exc_conn_p', 'inh_conn_p'].T))
+    interpolator = tri.LinearTriInterpolator(triang, results['exc'][extraction])
+    Xi, Yi = np.meshgrid(xi, yi)
+    zi = interpolator(Xi, Yi)
+    plt.contourf(Xi,Yi,zi, levels=np.linspace(-0.1, 80, 20))
+    logger.info(zi)
+    plt.colorbar()
+
+    plt.scatter(*(results['exc']['exc_conn_p', 'inh_conn_p'].T), 
+                c=results['exc'][extraction], edgecolor="k")
+    plt.title(f"{extraction} for n_neurons={default_params['n_neurons']}")
+    
+    plt.xlabel("Excitatory connectivity")
+    plt.ylabel("Inhibitory connectivity")
+    plt.savefig(f"{runbox.folder}/runbox_test.png")
 plt.show()
