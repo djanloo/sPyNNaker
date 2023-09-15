@@ -152,7 +152,7 @@ class RunBox:
         try:
             self.duration = box_params['duration']
         except KeyError as e:
-            logger.warning("DUration of the runbox was not set")
+            logger.warning("Duration of the runbox was not set")
             self.duration = None
 
         # Dictionary of all the systems of the runbox
