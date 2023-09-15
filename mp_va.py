@@ -81,7 +81,7 @@ runbox.add_extraction(final_isi_cv)
 runbox.run()
 runbox.extract_and_save()
 
-runbox = RunBox.from_folder(f"n_{default_params['n_neurons']}_conn_scan")
+# runbox = RunBox.from_folder(f"n_{default_params['n_neurons']}_conn_scan")
 
 levels = [np.linspace(-0.1, 80, 20), np.linspace(-0.1, 2, 10) ]
 for extraction, lvls in zip(["final_activity", "final_isi_cv"], levels):
