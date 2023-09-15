@@ -64,7 +64,7 @@ for exc_conn_p in np.linspace(min_conn, max_conn, N):
 # Here I specify which variables I want to compute for each population
 # If the function cannot be evaluated a WARING will be raised
 def mean_v(block):
-    return np.mean(block.segments[0].filter(name="v")[0].signal.magnitude)
+    return np.mean(block.segments[0].filter(name="v")[0].magnitude)
 
 def final_activity(block):
     return avg_activity(block, t_start=100)
