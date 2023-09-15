@@ -124,9 +124,14 @@ def num(s):
     
 
 def avg_isi_cv(population, t_start=100, t_end=None):
-    spike_train_list = population.get_data('spikes').segments[0].spiketrains
-    n_neurons = population.get_data().annotations['size']
 
+    logger.debug(f"passed population {population}")
+    logger.debug(f"population has attributes:\n{dir(population)}")
+
+    spike_train_list = population.segments[0].spiketrains
+    n_neurons = population.annotations['size']
+
+    
     if t_end is None:
         t_end = spike_train_list.t_stop.magnitude
 
@@ -140,7 +145,6 @@ def avg_isi_cv(population, t_start=100, t_end=None):
     for neuron_idx, spikes in enumerate(spike_train_list):
         spiketimes = spikes.magnitude[spikes.magnitude > t_start]
         if len(spiketimes) < 10:
-            logger.debug(f"neuron {neuron_idx} spiked {len(spiketimes)} times in interval and was excluded from cv computation")
             excluded += 1
         else:
             isi = np.diff(spiketimes)
@@ -149,6 +153,7 @@ def avg_isi_cv(population, t_start=100, t_end=None):
                 logger.warning(f"CV of neuron {neuron_idx} turned out to be NaN:\nspikes={spiketimes}\nisi={isi}")
             cvs += [current_cv]
     if excluded > 0.1*n_neurons:
-        logger.warning(f"More than 10% of neurons were excluded from CV computation ({excluded} over {n_neurons})")
+        logger.warning(f"More than 10% of neurons were excluded from ISI CV computation ({excluded} over {n_neurons})")
+        logger.warning(f"Average ISI CV is {np.mean(cvs)}")
     logger.debug(f"CVs are {cvs} (total of {len(cvs)}) (avg: {np.mean(cvs)})")
     return np.mean(cvs)

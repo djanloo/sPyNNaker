@@ -36,7 +36,13 @@ logger = logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
 min_conn, max_conn = 0.01, 0.03
-N = 4
+N = 2
+
+# Default parameters of each system
+default_params = dict(n_neurons=800, 
+                      exc_conn_p=0.02, 
+                      inh_conn_p=0.02,
+                      synaptic_delay=2)
 
 # Defines the RunBox where the systems will be runned on
 runbox = RunBox(sim, timestep=1, 
@@ -44,14 +50,8 @@ runbox = RunBox(sim, timestep=1,
                     duration=1000, 
                     min_delay=2,
                     neurons_per_core=250,
-                    folder="testRM"
+                    folder=f"n_{default_params['n_neurons']}_conn_scan"
                 )
-
-# Default parameters of each system
-default_params = dict(n_neurons=800, 
-                      exc_conn_p=0.02, 
-                      inh_conn_p=0.02,
-                      synaptic_delay=2)
 
 
 # Adds a bunch of systems t the runbox
@@ -83,9 +83,10 @@ runbox.add_extraction(final_isi_cv)
 # Start the simulation & save
 runbox.run()
 runbox.save()
-# runbox = RunBox.from_folder("RMv2")
+runbox = RunBox.from_folder(f"n_{default_params['n_neurons']}_conn_scan")
 
-for extraction in ["final_isi_cv", "final_activity"]:
+levels = [np.linspace(-0.1, 80, 20), np.linspace(-0.1, 2, 10) ]
+for extraction, lvls in zip(["final_activity", "final_isi_cv"], levels):
     plt.figure()
     # Extract the data in a format system_id -> function -> population -> values
     results = runbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", extraction)
@@ -94,23 +95,25 @@ for extraction in ["final_isi_cv", "final_activity"]:
 
 
     # Create grid values first.
-    xi = np.linspace(min_conn, max_conn, N)
-    yi = np.linspace(min_conn, max_conn, N)
+    xi = np.linspace(min_conn, max_conn, 3*N)
+    yi = np.linspace(min_conn, max_conn, 3*N)
 
     # Linearly interpolate the data (x, y) on a grid defined by (xi, yi).
     triang = tri.Triangulation(*(results['exc']['exc_conn_p', 'inh_conn_p'].T))
     interpolator = tri.LinearTriInterpolator(triang, results['exc'][extraction])
     Xi, Yi = np.meshgrid(xi, yi)
     zi = interpolator(Xi, Yi)
-    plt.contourf(Xi,Yi,zi, levels=np.linspace(-0.1, 80, 20))
+    mappable=plt.contourf(Xi,Yi,zi, levels=lvls)
     logger.info(zi)
-    plt.colorbar()
-
+    
     plt.scatter(*(results['exc']['exc_conn_p', 'inh_conn_p'].T), 
-                c=results['exc'][extraction], edgecolor="k")
+                c=results['exc'][extraction], edgecolor="k",vmin=lvls[0], vmax=lvls[-1])
+    
+    plt.colorbar(mappable)
+
     plt.title(f"{extraction} for n_neurons={default_params['n_neurons']}")
     
     plt.xlabel("Excitatory connectivity")
     plt.ylabel("Inhibitory connectivity")
-    plt.savefig(f"{runbox.folder}/runbox_test.png")
+    plt.savefig(f"{runbox.folder}/{extraction}.png")
 plt.show()

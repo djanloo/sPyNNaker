@@ -17,7 +17,7 @@ AUTHOR: djanloo
 DATE:   12/09/23
 """
 import os
-import pickle
+import dill as pickle
 import time
 
 import numpy as np
@@ -78,7 +78,12 @@ class System:
 
         for pop in self.pops.keys():
             try:
+                # Saves on file
                 self.pops[pop].write_data(f"{where}/{self.id}/{pop}.pkl")
+
+                # Converts to neo bllock
+                self.pops[pop] = pickle.load(f"{where}/{self.id}/{pop}.pkl")
+
             except ConfigurationException as e:
                 logger.error(f"Saving population <{pop}> raised an error: {e}")
 
@@ -218,10 +223,13 @@ class RunBox:
         extractions_for_each_population = dict()
 
         # Let me assume that each system has the same populations
-        for system_id in self.systems.keys():
-            pops = self.extractions[system_id][extraction].keys()
-            break
-        
+        try:
+            pops = self.extractions[list(self.systems.keys())[0]][extraction].keys()
+        except KeyError as e:
+            logger.warning(f"An error triggered the recomputation of the extactions: {e}")
+            self._extract()
+            pops = self.extractions[list(self.systems.keys())[0]][extraction].keys()
+
         logger.info(f"Getting extraction triplets ({param1}, {param2}, {extraction}) for populations {list(pops)}")
 
         for pop in pops:
@@ -263,6 +271,10 @@ class RunBox:
         with open(f"{self.folder}/extractions.pkl", "wb") as extr_file:
             logger.info("saving RunBox extractions")
             pickle.dump(self.extractions, extr_file)
+        
+        with open(f"{self.folder}/extractions_functions.pkl", "wb") as extrf_file:
+            logger.info("saving RunBox extractions functions")
+            pickle.dump(self._extraction_functions, extrf_file)
 
         with open(f"{self.folder}/runbox_conf.pkl", "wb") as boxpar_file:
             logger.info("saving RunBox configuration")
@@ -271,10 +283,17 @@ class RunBox:
     @classmethod
     def from_folder(cls, folder):
         runbox = cls(None, folder=folder)
+
+        if not os.path.exists(folder):
+            raise FileNotFoundError(f"Folder {folder} does not exist")
         
         with open(f"{folder}/extractions.pkl", "rb") as extr_file:
             logger.info("RunBox: loading extractions")
             runbox.extractions = pickle.load(extr_file)
+
+        with open(f"{folder}/extractions_functions.pkl", "rb") as extrf_file:
+            logger.info("RunBox: loading extraction functions")
+            runbox._extraction_functions = pickle.load(extrf_file)
 
         subfolders = [ f.path for f in os.scandir(folder) if f.is_dir() ]
 
@@ -286,5 +305,13 @@ class RunBox:
                 runbox.add_system(sys)
             except ValueError as e:
                 logger.warning(f"System in directory {subfolder} was skipped.")
+
+        # Check if the systems come from different runs:
+        try:
+            for system_id in runbox.systems.keys():
+               _ = runbox.extractions[system_id]
+        except KeyError:
+            logger.warning(f"During loading, an eerror caused the re-computation of extractions")
+            runbox._extract()
 
         return runbox
