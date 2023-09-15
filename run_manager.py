@@ -270,11 +270,12 @@ class RunBox:
             sys.pupate()
 
         if os.path.exists(f"{self.folder}/systems.pkl"):
-            logger.warning(f"Adding {len(existing_systems)} already existing systems")
+            logger.warning(f"Adding already existing systems...")
             with open(f"{self.folder}/systems.pkl", "rb") as systems_file:
                 existing_systems = pickle.load(systems_file)
                 self.systems.update(existing_systems)
-        
+            logger.warning(f"Added {len(existing_systems)} systems")
+
         logger.info("Saving systems...")
         with open(f"{self.folder}/systems.pkl", "wb") as systems_file:
             pickle.dump(self.systems, systems_file)
