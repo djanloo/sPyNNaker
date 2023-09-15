@@ -128,8 +128,8 @@ def avg_isi_cv(population, t_start=100, t_end=None):
     logger.debug(f"passed population {population}")
     logger.debug(f"population has attributes:\n{dir(population)}")
 
-    spike_train_list = population.segments[0].spiketrains
-    n_neurons = population.annotations['size']
+    spike_train_list = population.get_data('spikes').segments[0].spiketrains
+    n_neurons = population.get_data().annotations['size']
 
     
     if t_end is None:
