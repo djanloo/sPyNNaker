@@ -7,7 +7,6 @@ AUTHOR: djanloo
 DATE:   04/09/23
 """
 import numpy as np
-
 import os
 import matplotlib
 
@@ -29,13 +28,12 @@ from local_utils import set_loggers;
 
 set_loggers(lvl=logging.WARNING) # Sets all loggers to warning
 logging.getLogger("RUN_MANAGER").setLevel(logging.INFO) # Set Run Manager to info
-logging.getLogger("NETWORK_BUILDING").setLevel(logging.INFO)
 logging.getLogger("UTILS").setLevel(logging.DEBUG)
 
 logger = logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
-min_conn, max_conn = 0.01, 0.03
+min_conn, max_conn = 0.02, 0.04
 N = 2
 
 # Default parameters of each system
@@ -82,7 +80,8 @@ runbox.add_extraction(final_isi_cv)
 
 # Start the simulation & save
 runbox.run()
-runbox.save()
+runbox.extract_and_save()
+
 runbox = RunBox.from_folder(f"n_{default_params['n_neurons']}_conn_scan")
 
 levels = [np.linspace(-0.1, 80, 20), np.linspace(-0.1, 2, 10) ]
@@ -95,6 +94,7 @@ for extraction, lvls in zip(["final_activity", "final_isi_cv"], levels):
 
 
     # Create grid values first.
+    min_conn, max_conn = np.min(results['exc']['exc_conn_p', 'inh_conn_p']), np.max(results['exc']['exc_conn_p', 'inh_conn_p'])
     xi = np.linspace(min_conn, max_conn, 3*N)
     yi = np.linspace(min_conn, max_conn, 3*N)
 

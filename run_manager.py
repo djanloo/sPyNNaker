@@ -19,6 +19,7 @@ DATE:   12/09/23
 import os
 import dill as pickle
 import time
+import multiprocessing as mp
 
 import numpy as np
 from pyNN.random import RandomDistribution
@@ -49,7 +50,7 @@ class System:
             logger.warning("System was initialized without build method")
             self.pops = dict()
         self._id = None
-
+        self._was_converted = False
         logger.info(f"Successfully created {self} with params\n{self.params_dict}")
 
     @property
@@ -60,7 +61,7 @@ class System:
 
     @id.setter
     def id(self, value):
-        logger.warning(f"Id of {self} was forcefully changed to {value}")
+        logger.debug(f"Id of {self} was forcefully changed to {value}")
         self._id = value
 
     def save(self, where):
@@ -80,10 +81,10 @@ class System:
             try:
                 # Saves on file
                 self.pops[pop].write_data(f"{where}/{self.id}/{pop}.pkl")
-
-                # Converts to neo bllock
-                self.pops[pop] = pickle.load(f"{where}/{self.id}/{pop}.pkl")
-
+                with open(f"{where}/{self.id}/{pop}.pkl", "rb") as popfile:
+                #     pickle.dump(self.pops[pop], popfile)
+                        self.pops[pop] = pickle.load(popfile)
+                        self._was_converted = True
             except ConfigurationException as e:
                 logger.error(f"Saving population <{pop}> raised an error: {e}")
 
@@ -91,8 +92,11 @@ class System:
         with open(f"{where}/{self.id}/conf.cfg", 'wb') as file:
             logger.info(f"Saving config file for system {self} population  in {where}/{self.id}/conf.cfg")
             pickle.dump(self.params_dict, file)
-
+    
     def extract(self, function):
+        if not self._was_converted:
+            raise RuntimeError("System must be converted to neo block first")
+        
         extraction = dict()
         for pop in self.pops.keys():
             # test = self.pops[pop].get_v().segments[0].analogsignals
@@ -132,6 +136,8 @@ class System:
             with open(f"{folder}/{pop}.pkl", "rb") as popfile:
                 sys.pops[pop] = pickle.load(popfile)
                 logger.info(f"{sys}: added population <{pop}>")
+
+        sys._was_converted = True
         return sys
 
 class RunBox:
@@ -178,7 +184,10 @@ class RunBox:
         To do so, function must take a population as an argument.
         """
         self._extraction_functions.append(function)
-    
+    def _convert_to_neo_block(self):
+        for system_id in self.systems.keys():
+            self.systems[system_id]._convert_to_neo_block()
+
     def _extract(self):
         logger.info("Starting functions extraction")
         self.extractions = dict()
@@ -262,11 +271,24 @@ class RunBox:
         self.sim.run(self.duration)
         self._run_time = time.perf_counter() - start
         logger.info(f"Simulation took in {self._run_time} seconds")
-        self._extract()
 
-    def save(self):
-        for system_id in self.systems.keys():
-            self.systems[system_id].save(self.folder)
+    def extract_and_save(self):
+        self._save_systems()
+        self._extract()
+        self._save_configs()
+
+    def _save_systems(self):
+        # Creare un pool di processi
+        pool = mp.Pool()
+        savesyst = lambda syst: syst.save()
+        # Utilizzare il pool per chiamare il metodo su ciascuna istanza in parallelo
+        pool.map(savesyst, self.systems.values())
+
+        # Chiudere il pool dei processi
+        pool.close()
+        pool.join()
+
+    def _save_configs(self):
         
         with open(f"{self.folder}/extractions.pkl", "wb") as extr_file:
             logger.info("saving RunBox extractions")
