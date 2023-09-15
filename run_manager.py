@@ -66,14 +66,19 @@ class System:
         self._id = value
 
     def pupate(self):
+        bad_populations = []
         for popname in self.pops:
             # Population get substituted with their neo blocks
             try:
                 self.pops[popname] = self.pops[popname].get_data()
             except ConfigurationException as e:
                 logger.warning(f"An error lead to the deletion of population {popname} af system {self}\nError was: {e}")
-                del self.pops[popname]
-            self._was_converted = True
+                bad_populations += [popname]
+
+        for popname in bad_populations:
+            del self.pops[popname]
+
+        self._was_converted = True
     
     def extract(self, function):
         if not self._was_converted:
