@@ -22,17 +22,17 @@ sim = get_sim()
 
 from run_manager import RunBox, System
 from vogels_abbott import build_system
-from local_utils import avg_activity
+from local_utils import avg_activity, avg_isi_cv
 
 import logging
 from local_utils import set_loggers;
 
 set_loggers(lvl=logging.WARNING) # Sets all loggers to warning
 logging.getLogger("RUN_MANAGER").setLevel(logging.INFO) # Set Run Manager to info
+logging.getLogger("NETWORK_BUILDING".setLevel(logging.INFO))
 
 logger = logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
-
 
 min_conn, max_conn = 0.01, 0.03
 N = 7
@@ -70,9 +70,13 @@ def mean_v(pop):
 def final_activity(pop):
     return avg_activity(pop, t_start=100)
 
+def final_isi_cv(pop):
+    return avg_isi_cv(pop, t_start=100)
+
 # Here I tell the RunBox to extract mean_v for each population for each system
 runbox.add_extraction(mean_v)
 runbox.add_extraction(final_activity)
+runbox.add_extraction(final_isi_cv)
 
 # Start the simulation & save
 runbox.run()

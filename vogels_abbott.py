@@ -52,7 +52,7 @@ def build_system(system_params):
     r_ei = 4.0
     n_exc = int(round((system_params['n_neurons'] * r_ei / (1 + r_ei))))
     n_inh = system_params['n_neurons'] - n_exc
-    logger.info(f"Sub-network has {n_exc} excitatory neurons and {n_inh} inhibitory neurons")
+    logger.info(f"Sub-network has {n_exc} (type {type(n_exc)}) excitatory neurons and {n_inh} (type {type(n_inh)}) inhibitory neurons")
 
     pops[f'exc'] = sim.Population(
                                     n_exc, 

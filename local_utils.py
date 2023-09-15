@@ -121,3 +121,24 @@ def num(s):
         return int(s)
     except ValueError:
         return float(s)
+    
+
+def avg_isi_cv(population, t_start=100, t_end=None):
+    spike_train_list = population.get_data('spikes').segments[0].spiketrains
+    n_neurons = population.get_data().annotations['size']
+
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
+    spike_train_list = population.get_data('spikes').segments[0].spiketrains
+    n_neurons = population.get_data().annotations['size']
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
+    cvs = np.zeros(n_neurons)
+    for neuron_idx, spikes in enumerate(spike_train_list):
+        spiketimes = spikes.magnitude[spikes.magnitude > t_start]
+        isi = np.diff(spiketimes)
+        cvs[neuron_idx] = np.std(isi)/np.mean(isi)
+    logger.debug(f"CVs are {cvs} (avg: {np.mean(cvs)})")
+    return np.mean(cvs)
