@@ -33,11 +33,11 @@ logging.getLogger("UTILS").setLevel(logging.DEBUG)
 logger = logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
-min_conn, max_conn = 0.02, 0.04
-N = 2
+min_conn, max_conn = 0.01, 0.075
+N = 4
 
 # Default parameters of each system
-default_params = dict(n_neurons=800, 
+default_params = dict(n_neurons=300, 
                       exc_conn_p=0.02, 
                       inh_conn_p=0.02,
                       synaptic_delay=2)
@@ -51,7 +51,6 @@ runbox = RunBox(sim, timestep=1,
                     folder=f"n_{default_params['n_neurons']}_conn_scan"
                 )
 
-
 # Adds a bunch of systems t the runbox
 for exc_conn_p in np.linspace(min_conn, max_conn, N):
     for inh_conn_p in np.linspace(min_conn, max_conn, N):
@@ -64,14 +63,14 @@ for exc_conn_p in np.linspace(min_conn, max_conn, N):
 
 # Here I specify which variables I want to compute for each population
 # If the function cannot be evaluated a WARING will be raised
-def mean_v(pop):
-    return np.mean(pop.get_data('v').segments[0].analogsignals[0].magnitude)
+def mean_v(block):
+    return np.mean(block.segments[0].filter(name="v")[0].signal.magnitude)
 
-def final_activity(pop):
-    return avg_activity(pop, t_start=100)
+def final_activity(block):
+    return avg_activity(block, t_start=100)
 
-def final_isi_cv(pop):
-    return avg_isi_cv(pop, t_start=100)
+def final_isi_cv(block):
+    return avg_isi_cv(block, t_start=100)
 
 # Here I tell the RunBox to extract mean_v for each population for each system
 runbox.add_extraction(mean_v)

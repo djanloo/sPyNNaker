@@ -19,7 +19,8 @@ DATE:   12/09/23
 import os
 import dill as pickle
 import time
-import multiprocessing as mp
+import pathos.multiprocessing as mp
+from time import perf_counter
 
 import numpy as np
 from pyNN.random import RandomDistribution
@@ -64,34 +65,11 @@ class System:
         logger.debug(f"Id of {self} was forcefully changed to {value}")
         self._id = value
 
-    def save(self, where):
-        try:
-            os.mkdir(where)
-        except FileExistsError:
-            pass
-
-        try:
-            os.mkdir(f"{where}/{self.id}")
-        except FileExistsError:
-            pass
-        
-        logger.info(f"Saving for {self}")
-
-        for pop in self.pops.keys():
-            try:
-                # Saves on file
-                self.pops[pop].write_data(f"{where}/{self.id}/{pop}.pkl")
-                with open(f"{where}/{self.id}/{pop}.pkl", "rb") as popfile:
-                #     pickle.dump(self.pops[pop], popfile)
-                        self.pops[pop] = pickle.load(popfile)
-                        self._was_converted = True
-            except ConfigurationException as e:
-                logger.error(f"Saving population <{pop}> raised an error: {e}")
-
-        # Saves the configuration of the run
-        with open(f"{where}/{self.id}/conf.cfg", 'wb') as file:
-            logger.info(f"Saving config file for system {self} population  in {where}/{self.id}/conf.cfg")
-            pickle.dump(self.params_dict, file)
+    def pupate(self):
+        for popname in self.pops:
+            # Population get substituted with their neo blocks
+            self.pops[popname] = self.pops[popname].get_data()
+            self._was_converted = True
     
     def extract(self, function):
         if not self._was_converted:
@@ -99,15 +77,11 @@ class System:
         
         extraction = dict()
         for pop in self.pops.keys():
-            # test = self.pops[pop].get_v().segments[0].analogsignals
-            # logger.info(f"test is {test}")
-            # logger.info(f"dir(test) is {dir(test)}")
             try:
                 extraction[pop] = function(self.pops[pop])
             except Exception as e:
                 logger.error(f"Function evaluation on population <{pop}> raised: {e}")
                 logger.warning(f"Skipping evaluation of <{function.__name__}> on <{pop}>")
-
         return extraction
 
 
@@ -174,6 +148,10 @@ class RunBox:
         self._extraction_functions = []
 
         self.folder = folder
+        try:
+            os.mkdir(self.folder)
+        except FileExistsError:
+            pass
 
     def add_system(self, system):
         self.systems[system.id] = system
@@ -189,6 +167,19 @@ class RunBox:
             self.systems[system_id]._convert_to_neo_block()
 
     def _extract(self):
+
+        t1 = perf_counter()
+        pool = mp.Pool()
+
+        for function in self._extraction_functions:
+            ext = lambda x: x.extract(function)
+            results = pool.map(ext, self.systems.values())
+
+        pool.close()
+        pool.join()
+
+        t2 = perf_counter()
+
         logger.info("Starting functions extraction")
         self.extractions = dict()
         for system_id in self.systems.keys():
@@ -197,6 +188,9 @@ class RunBox:
                 logger.debug(f"Extracting <{function.__name__}> from {self.systems[system_id]}")
                 self.extractions[system_id][function.__name__] = self.systems[system_id].extract(function)
                 logger.debug(f"Got dictionary with keys {self.extractions[system_id][function.__name__].keys()}")
+        t3 = perf_counter()
+
+        logger.info(f"Extraction:\n parallel={t2-t1}, normal={t3-t2}")
     
     def get_extraction_couples(self, param=None, extraction=None):
 
@@ -276,17 +270,19 @@ class RunBox:
         self._save_systems()
         self._extract()
         self._save_configs()
-
+    
     def _save_systems(self):
-        # Creare un pool di processi
-        pool = mp.Pool()
-        savesyst = lambda syst: syst.save()
-        # Utilizzare il pool per chiamare il metodo su ciascuna istanza in parallelo
-        pool.map(savesyst, self.systems.values())
+        for sys in self.systems.values():
+            sys.pupate()
 
-        # Chiudere il pool dei processi
-        pool.close()
-        pool.join()
+        if os.path.exists(f"{self.folder}/systems.pkl"):
+            with open(f"{self.folder}/systems.pkl", "rb") as systems_file:
+                existing_systems = pickle.load(systems_file)
+                self.systems.update(existing_systems)
+            logger.warning(f"Adding {len(existing_systems)} already existing systems")
+
+        with open(f"{self.folder}/systems.pkl", "wb") as systems_file:
+            pickle.dump(self.systems, systems_file)
 
     def _save_configs(self):
         
@@ -309,6 +305,10 @@ class RunBox:
         if not os.path.exists(folder):
             raise FileNotFoundError(f"Folder {folder} does not exist")
         
+        with open(f"{folder}/systems.pkl", "rb") as syst_file:
+            logger.info("RunBox: loading extractions")
+            runbox.systems = pickle.load(syst_file)
+
         with open(f"{folder}/extractions.pkl", "rb") as extr_file:
             logger.info("RunBox: loading extractions")
             runbox.extractions = pickle.load(extr_file)
@@ -316,24 +316,5 @@ class RunBox:
         with open(f"{folder}/extractions_functions.pkl", "rb") as extrf_file:
             logger.info("RunBox: loading extraction functions")
             runbox._extraction_functions = pickle.load(extrf_file)
-
-        subfolders = [ f.path for f in os.scandir(folder) if f.is_dir() ]
-
-        logger.info(f"Found {len(subfolders)} subfolders to analyse in {folder}: {subfolders}")
-        for subfolder in subfolders:
-            logger.info(f"RunBox: loading system from folder {subfolder}")
-            try:
-                sys = System.from_folder(f"{subfolder}")
-                runbox.add_system(sys)
-            except ValueError as e:
-                logger.warning(f"System in directory {subfolder} was skipped.")
-
-        # Check if the systems come from different runs:
-        try:
-            for system_id in runbox.systems.keys():
-               _ = runbox.extractions[system_id]
-        except KeyError:
-            logger.warning(f"During loading, an eerror caused the re-computation of extractions")
-            runbox._extract()
-
+        
         return runbox
