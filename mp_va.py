@@ -33,11 +33,11 @@ logging.getLogger("UTILS").setLevel(logging.DEBUG)
 logger = logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
-min_conn, max_conn = 0.01, 0.075
-N = 4
+min_conn, max_conn = 0.01, 0.08
+N = 10
 
 # Default parameters of each system
-default_params = dict(n_neurons=300, 
+default_params = dict(n_neurons=1000, 
                       exc_conn_p=0.02, 
                       inh_conn_p=0.02,
                       synaptic_delay=2)
@@ -83,27 +83,22 @@ runbox.extract_and_save()
 
 # runbox = RunBox.from_folder(f"n_{default_params['n_neurons']}_conn_scan")
 
-levels = [np.linspace(-0.1, 80, 20), np.linspace(-0.1, 2, 10) ]
+levels = [np.linspace(-0.1, 110, 20), np.linspace(-0.1, 2, 10) ]
 for extraction, lvls in zip(["final_activity", "final_isi_cv"], levels):
     plt.figure()
     # Extract the data in a format system_id -> function -> population -> values
     results = runbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", extraction)
 
     logger.info(f"results is {results}")
-
+    
 
     # Create grid values first.
     min_conn, max_conn = np.min(results['exc']['exc_conn_p', 'inh_conn_p']), np.max(results['exc']['exc_conn_p', 'inh_conn_p'])
-    xi = np.linspace(min_conn, max_conn, 3*N)
-    yi = np.linspace(min_conn, max_conn, 3*N)
+    data = results['exc'][extraction]
+    data[np.isnan(data)] = 4.0
 
-    # Linearly interpolate the data (x, y) on a grid defined by (xi, yi).
     triang = tri.Triangulation(*(results['exc']['exc_conn_p', 'inh_conn_p'].T))
-    interpolator = tri.LinearTriInterpolator(triang, results['exc'][extraction])
-    Xi, Yi = np.meshgrid(xi, yi)
-    zi = interpolator(Xi, Yi)
-    mappable=plt.contourf(Xi,Yi,zi, levels=lvls)
-    logger.info(zi)
+    mappable=plt.tricontourf(triang, data, levels=lvls)
     
     plt.scatter(*(results['exc']['exc_conn_p', 'inh_conn_p'].T), 
                 c=results['exc'][extraction], edgecolor="k",vmin=lvls[0], vmax=lvls[-1])
