@@ -145,7 +145,7 @@ def system_analysis(args):
         pg.save(f"{system_name}/outputs")
 
 
-def runbox_analysis(args):
+def lunchbox_analysis(args):
     subfolders = [dir_ for dir_ in os.listdir(os.path.abspath(os.path.join("./", args['folder'])))]
 
     logger.info(f"Found {len(subfolders)} subfolders to analyse in {args['folder']}: {subfolders}")
@@ -225,4 +225,4 @@ if __name__=="__main__":
             read_neo_file(file)
 
 
-    runbox_analysis(vars(args))
+    lunchbox_analysis(vars(args))

@@ -123,7 +123,7 @@ class System:
         sys._was_converted = True
         return sys
 
-class RunBox:
+class LunchBox:
     """A container for systems that can be run together, 
     i.e. ones sharing duration, timescale and timestep.
     """
@@ -146,10 +146,10 @@ class RunBox:
         try:
             self.duration = box_params['duration']
         except KeyError as e:
-            logger.warning("Duration of the runbox was not set")
+            logger.warning("Duration of the lunchbox was not set")
             self.duration = None
 
-        # Dictionary of all the systems of the runbox
+        # Dictionary of all the systems of the lunchbox
         # Indexed by id
         self.systems = dict()
 
@@ -254,7 +254,7 @@ class RunBox:
         total_neurons = np.sum(total_neurons)
 
 
-        logger.info(f"Running runbox composed of {len(self.systems)} systems ({total_neurons} total neurons) for {self.duration} timesteps")
+        logger.info(f"Running lunchbox composed of {len(self.systems)} systems ({total_neurons} total neurons) for {self.duration} timesteps")
         start = time.perf_counter()
         self.sim.run(self.duration)
         self._run_time = time.perf_counter() - start
@@ -283,34 +283,34 @@ class RunBox:
     def _save_configs(self):
         
         with open(f"{self.folder}/extractions.pkl", "wb") as extr_file:
-            logger.info("saving RunBox extractions")
+            logger.info("saving LunchBox extractions")
             pickle.dump(self.extractions, extr_file)
         
         with open(f"{self.folder}/extractions_functions.pkl", "wb") as extrf_file:
-            logger.info("saving RunBox extractions functions")
+            logger.info("saving LunchBox extractions functions")
             pickle.dump(self._extraction_functions, extrf_file)
 
-        with open(f"{self.folder}/runbox_conf.pkl", "wb") as boxpar_file:
-            logger.info("saving RunBox configuration")
+        with open(f"{self.folder}/lunchbox_conf.pkl", "wb") as boxpar_file:
+            logger.info("saving LunchBox configuration")
             pickle.dump(self.box_params, boxpar_file)
     
     @classmethod
     def from_folder(cls, folder):
-        runbox = cls(None, folder=folder)
+        lunchbox = cls(None, folder=folder)
 
         if not os.path.exists(folder):
             raise FileNotFoundError(f"Folder {folder} does not exist")
         
         with open(f"{folder}/systems.pkl", "rb") as syst_file:
-            logger.info("RunBox: loading extractions")
-            runbox.systems = pickle.load(syst_file)
+            logger.info("LunchBox: loading extractions")
+            lunchbox.systems = pickle.load(syst_file)
 
         with open(f"{folder}/extractions.pkl", "rb") as extr_file:
-            logger.info("RunBox: loading extractions")
-            runbox.extractions = pickle.load(extr_file)
+            logger.info("LunchBox: loading extractions")
+            lunchbox.extractions = pickle.load(extr_file)
 
         with open(f"{folder}/extractions_functions.pkl", "rb") as extrf_file:
-            logger.info("RunBox: loading extraction functions")
-            runbox._extraction_functions = pickle.load(extrf_file)
+            logger.info("LunchBox: loading extraction functions")
+            lunchbox._extraction_functions = pickle.load(extrf_file)
         
-        return runbox
+        return lunchbox

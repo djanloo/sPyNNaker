@@ -19,7 +19,7 @@ import matplotlib.tri as tri
 from local_utils import get_sim
 sim = get_sim()
 
-from run_manager import RunBox, System
+from run_manager import LunchBox, System
 from vogels_abbott import build_system
 from local_utils import avg_activity, avg_isi_cv
 
@@ -42,8 +42,8 @@ default_params = dict(n_neurons=1000,
                       inh_conn_p=0.02,
                       synaptic_delay=2)
 
-# Defines the RunBox where the systems will be runned on
-runbox = RunBox(sim, timestep=1, 
+# Defines the LunchBox where the systems will be runned on
+lunchbox = LunchBox(sim, timestep=1, 
                     time_scale_factor=50, 
                     duration=1000, 
                     min_delay=2,
@@ -51,7 +51,7 @@ runbox = RunBox(sim, timestep=1,
                     folder=f"n_{default_params['n_neurons']}_conn_scan"
                 )
 
-# Adds a bunch of systems t the runbox
+# Adds a bunch of systems t the lunchbox
 for exc_conn_p in np.linspace(min_conn, max_conn, N):
     for inh_conn_p in np.linspace(min_conn, max_conn, N):
         params = default_params.copy()
@@ -59,7 +59,7 @@ for exc_conn_p in np.linspace(min_conn, max_conn, N):
         params['exc_conn_p'] = exc_conn_p
         params['inh_conn_p'] = inh_conn_p
 
-        runbox.add_system(System(build_system, params))
+        lunchbox.add_system(System(build_system, params))
 
 # Here I specify which variables I want to compute for each population
 # If the function cannot be evaluated a WARING will be raised
@@ -72,22 +72,22 @@ def final_activity(block):
 def final_isi_cv(block):
     return avg_isi_cv(block, t_start=100)
 
-# Here I tell the RunBox to extract mean_v for each population for each system
-runbox.add_extraction(mean_v)
-runbox.add_extraction(final_activity)
-runbox.add_extraction(final_isi_cv)
+# Here I tell the LunchBox to extract mean_v for each population for each system
+lunchbox.add_extraction(mean_v)
+lunchbox.add_extraction(final_activity)
+lunchbox.add_extraction(final_isi_cv)
 
 # Start the simulation & save
-runbox.run()
-runbox.extract_and_save()
+lunchbox.run()
+lunchbox.extract_and_save()
 
-# runbox = RunBox.from_folder(f"n_{default_params['n_neurons']}_conn_scan")
+# lunchbox = LunchBox.from_folder(f"n_{default_params['n_neurons']}_conn_scan")
 
 levels = [np.linspace(-0.1, 110, 20), np.linspace(-0.1, 2, 10) ]
 for extraction, lvls in zip(["final_activity", "final_isi_cv"], levels):
     plt.figure()
     # Extract the data in a format system_id -> function -> population -> values
-    results = runbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", extraction)
+    results = lunchbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", extraction)
 
     logger.info(f"results is {results}")
     
@@ -109,5 +109,5 @@ for extraction, lvls in zip(["final_activity", "final_isi_cv"], levels):
     
     plt.xlabel("Excitatory connectivity")
     plt.ylabel("Inhibitory connectivity")
-    plt.savefig(f"{runbox.folder}/{extraction}.png")
+    plt.savefig(f"{lunchbox.folder}/{extraction}.png")
 plt.show()
