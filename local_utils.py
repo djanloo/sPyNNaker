@@ -12,6 +12,9 @@ import numpy as np
 import logging
 from rich.logging import RichHandler
 
+
+_SIM_WAS_CHOSEN = False
+
 def set_loggers(lvl=logging.DEBUG):
     
     # Sets rich to be the handler of logger
@@ -36,26 +39,29 @@ def get_sim():
     simulator_name = os.environ.get("DJANLOO_NEURAL_SIMULATOR")
 
     if simulator_name == "spiNNaker":
-        logger.info("choosing [blue]SPINNAKER[/blue] as simulator",
-                    extra={"markup": True})
+        if not _SIM_WAS_CHOSEN:
+            logger.info("choosing [blue]SPINNAKER[/blue] as simulator",
+                        extra={"markup": True})
         import pyNN.spiNNaker as sim
     elif simulator_name == 'neuron':
-        logger.info("Choosing [green]NEURON[/green] as simulator",
-                    extra={"markup": True})
+        if not _SIM_WAS_CHOSEN:
+            logger.info("Choosing [green]NEURON[/green] as simulator",
+                        extra={"markup": True})
         import pyNN.neuron as sim
     elif simulator_name == 'brian':
-        logger.info("Choosing [yellow]BRIAN2[/yellow] as simulator",
-                    extra={"markup": True})
+        if not _SIM_WAS_CHOSEN:
+            logger.info("Choosing [yellow]BRIAN2[/yellow] as simulator",
+                        extra={"markup": True})
         import pyNN.brian2 as sim
     elif simulator_name == 'nest':
-        logger.info("Choosing [magenta]NEST[/magenta] as simulator",
-                    extra={"markup": True})
+        if not _SIM_WAS_CHOSEN:
+            logger.info("Choosing [magenta]NEST[/magenta] as simulator",
+                        extra={"markup": True})
         import pyNN.nest as sim
     else:
         raise ValueError(f"Simulator defined in the environment [{simulator_name}] is not implemented")
-        pprint("Simulator is not specified by [red]DJANLOO_NEURAL_SIMULATOR[/red]\nDefaulting to [green]neuron[/green]...")
         import pyNN.neuron as sim
-
+    _SIM_WAS_CHOSEN = True
     return sim
 
 

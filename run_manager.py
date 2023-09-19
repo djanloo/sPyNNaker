@@ -302,7 +302,7 @@ class LunchBox:
             raise FileNotFoundError(f"Folder {folder} does not exist")
         
         with open(f"{folder}/systems.pkl", "rb") as syst_file:
-            logger.info("LunchBox: loading extractions")
+            logger.info("LunchBox: loading systems")
             lunchbox.systems = pickle.load(syst_file)
 
         with open(f"{folder}/extractions.pkl", "rb") as extr_file:
