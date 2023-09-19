@@ -54,12 +54,13 @@ runbox = LunchBox(sim, timestep=1,
 # Adds a bunch of systems t the runbox
 for exc_conn_p in np.linspace(min_conn, max_conn, N):
     for inh_conn_p in np.linspace(min_conn, max_conn, N):
-        params = default_params.copy()
+        if exc_conn_p >= inh_conn_p:
+            params = default_params.copy()
 
-        params['exc_conn_p'] = exc_conn_p
-        params['inh_conn_p'] = inh_conn_p
+            params['exc_conn_p'] = exc_conn_p
+            params['inh_conn_p'] = inh_conn_p
 
-        runbox.add_system(System(build_system, params))
+            runbox.add_system(System(build_system, params))
 
 # Here I specify which variables I want to compute for each population
 # If the function cannot be evaluated a WARING will be raised
