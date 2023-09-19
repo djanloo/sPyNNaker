@@ -196,4 +196,4 @@ def random_subsample_synchronicity(block, binsize_ms=1, subsamp_size=20, n_sampl
     if return_all:
         return samples_activities
     else:
-        return np.std(np.mean(samples_activities, axis=0))
+        return np.mean(np.std(samples_activities, axis=0))
