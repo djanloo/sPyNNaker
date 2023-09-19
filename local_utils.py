@@ -8,6 +8,7 @@ minor computations
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from quantities import millisecond as ms
 
 import logging
 from rich.logging import RichHandler
@@ -158,3 +159,30 @@ def avg_isi_cv(block, t_start=100, t_end=None):
         logger.warning(f"Average ISI CV is {np.mean(cvs)}")
     logger.debug(f"CVs are {cvs} (total of {len(cvs)}) (avg: {np.mean(cvs)})")
     return np.mean(cvs)
+
+
+def random_subsample_synchronicity(block, binsize_ms=1, subsamp_size=20, n_samples=30, t_start=100, return_all=False):
+    spiketrains = block.segments[0].spiketrains
+    t_stop = spiketrains.t_stop
+    t_start = t_start*ms
+    binsize = binsize_ms * ms
+    bins=np.linspace(t_start.magnitude, t_stop.magnitude, int((t_stop - t_start)/binsize)+1)
+    samples_activities = np.zeros((n_samples, len(bins) -1))
+    indexes = np.arange(len(spiketrains))
+    for sample_n in range(n_samples):
+        np.random.shuffle(indexes)
+        subsamp = []
+        for subsamp_idx in indexes[:subsamp_size]:
+            subsamp.append(spiketrains[subsamp_idx])
+
+        subsamp_spikes = spiketrains_to_couples(subsamp)
+
+        subsamp_spikes= subsamp_spikes[(subsamp_spikes[:, 1] > t_start.magnitude)&(subsamp_spikes[:, 1] < t_stop.magnitude)]
+        # logger.info(f"Spiketimes of subsamp are {subsamp_spikes[:, 1]}")
+        subsamp_act = np.histogram(subsamp_spikes[:, 1], bins=bins)[0]
+        # logger.info(f"Subsamp avg activity is {subsamp_act}")
+        samples_activities[sample_n] = subsamp_act
+    if return_all:
+        return samples_activities
+    else:
+        return np.mean(samples_activities)
