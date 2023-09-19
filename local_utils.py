@@ -168,6 +168,14 @@ def random_subsample_synchronicity(block, binsize_ms=1, subsamp_size=20, n_sampl
     binsize = binsize_ms * ms
     bins=np.linspace(t_start.magnitude, t_stop.magnitude, int((t_stop - t_start)/binsize)+1)
     samples_activities = np.zeros((n_samples, len(bins) -1))
+
+    # Delete inactive neurons
+    actives = []
+    for sp in spiketrains:
+        if len(sp) < 10:
+            actives.append(sp)
+    spiketrains = actives
+
     indexes = np.arange(len(spiketrains))
     for sample_n in range(n_samples):
         np.random.shuffle(indexes)
