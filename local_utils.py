@@ -35,6 +35,7 @@ logger = logging.getLogger("UTILS")
 
 
 def get_sim():
+    global _SIM_WAS_CHOSEN
     # Choice of the simulator is based on environment variables
     simulator_name = os.environ.get("DJANLOO_NEURAL_SIMULATOR")
 
