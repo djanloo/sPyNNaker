@@ -175,7 +175,9 @@ def random_subsample_synchronicity(block, binsize_ms=1, subsamp_size=20, n_sampl
         if len(sp) < 10:
             actives.append(sp)
     spiketrains = actives
-
+    if actives < subsamp_size:
+        logger.warning(f"Could not estimate sync of net: active samples are less than subsample size")
+        return np.nan
     indexes = np.arange(len(spiketrains))
     for sample_n in range(n_samples):
         np.random.shuffle(indexes)
