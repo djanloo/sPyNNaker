@@ -24,9 +24,6 @@ lunchbox._extract()
 sincronicity_results = lunchbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", "sync")
 data = sincronicity_results['exc']['sync']
 
-
-
-
 triang = tri.Triangulation(*(sincronicity_results['exc']['exc_conn_p', 'inh_conn_p'].T))
 mappable=plt.tricontourf(triang, data)
 plt.scatter(*(sincronicity_results['exc']['exc_conn_p', 'inh_conn_p'].T), 
@@ -43,4 +40,15 @@ plt.ylabel("Inhibitory connectivity")
 # for sys in [sys_1, sys_2]:
 #     syn = sync(lunchbox.systems[sys].pops['exc'])
 #     plt.plot(np.mean(syn, axis=1))
+
+plt.figure(2)
+
+for extr in [np.max, np.min]:
+    val = extr(data[data>0.0])
+    for sys_id in lunchbox.systems.keys():
+        if lunchbox.extractions[sys_id]['sync']['exc'] == val:
+            plt.scatter(*(spiketrains_to_couples(lunchbox.systems[sys_id].pops['exc'].segments[0].spiketrains).T),
+                        label=f"sync = {val:.2}", s=3, alpha=0.8)
+            break
+plt.legend()
 plt.show()
