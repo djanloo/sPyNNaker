@@ -203,7 +203,9 @@ def chisync(block,
             subsamp_sizes=[10, 20, 30, 40, 50, 60, 70],
             bootstrap_trials=3
             ):
-    
+    if avg_activity(block) < 2:
+        logger.warning("chisync: population was too low in activity to compute chi. Returning 0.")
+        return 0
     v = block.segments[0].filter(name="v")[0].magnitude.T
     indexes = np.arange(v.shape[0])
 

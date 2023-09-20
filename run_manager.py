@@ -310,7 +310,7 @@ class LunchBox:
                     is_in_region = False
             if is_in_region:
                 systems_in_region.append(self.systems[sys_id])
-        logger.debug(f"For region {extrema_dict} returning systems havinh params:")
+        logger.debug(f"For region {extrema_dict} returning systems having params:")
         for sys in systems_in_region:
             logger.debug(sys.params_dict)
         return systems_in_region
