@@ -304,6 +304,7 @@ class LunchBox:
                 try:
                     if params[par] < extrema_dict[par][0] or params[par] > extrema_dict[par][1]:
                         is_in_region = False
+                        logger.debug(f"system excluded from region since {par}={params[par]} is not in {extrema_dict[par]}")
                 except KeyError as e:
                     logger.warning(f"Parameter {par} was not found in {self.systems[sys_id]}\nRaised: {e}")
                     is_in_region = False
