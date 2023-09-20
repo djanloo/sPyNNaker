@@ -296,20 +296,23 @@ class LunchBox:
     
 
     def get_systems_in_region(self, extrema_dict):
-        valid = []
+        systems_in_region = []
         for sys_id in self.systems.keys():
+            is_in_region = True
             params =self.systems[sys_id].params_dict
             for par in extrema_dict.keys():
                 try:
-                    if params[par] > extrema_dict[par][0] and \
-                        params[par] < extrema_dict[par][1]:
-                        valid.append(self.systems[sys_id])
+                    if params[par] < extrema_dict[par][0] or params[par] > extrema_dict[par][1]:
+                        is_in_region = False
                 except KeyError as e:
-                    logger.warning(f"Parameter {par} was not found in {self.systems[sys_id]}")
+                    logger.warning(f"Parameter {par} was not found in {self.systems[sys_id]}\nRaised: {e}")
+                    is_in_region = False
+            if is_in_region:
+                systems_in_region.append(self.systems[sys_id])
         logger.debug(f"For region {extrema_dict} returning systems havinh params:")
-        for sys in valid:
+        for sys in systems_in_region:
             logger.debug(sys.params_dict)
-        return valid
+        return systems_in_region
 
 
     @classmethod
