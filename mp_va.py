@@ -21,7 +21,7 @@ sim = get_sim()
 
 from run_manager import LunchBox, System
 from vogels_abbott import build_system
-from local_utils import avg_activity, avg_isi_cv
+from local_utils import avg_activity, avg_isi_cv, potential_random_subsample_synchronicity
 
 import logging
 from local_utils import set_loggers;
@@ -34,10 +34,10 @@ logger = logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
 min_conn, max_conn = 0.01, 0.03
-N = 3
+N = 5
 
 # Default parameters of each system
-default_params = dict(n_neurons=600, 
+default_params = dict(n_neurons=700, 
                       exc_conn_p=0.02, 
                       inh_conn_p=0.02,
                       synaptic_delay=2)
@@ -73,10 +73,15 @@ def final_activity(block):
 def final_isi_cv(block):
     return avg_isi_cv(block, t_start=100)
 
+def synchronicity(block):
+    return potential_random_subsample_synchronicity(block)
+
+
 # Here I tell the RunBox to extract mean_v for each population for each system
 runbox.add_extraction(mean_v)
 runbox.add_extraction(final_activity)
 runbox.add_extraction(final_isi_cv)
+runbox.add_extraction(synchronicity)
 
 # Start the simulation & save
 runbox.run()
@@ -84,8 +89,8 @@ runbox.extract_and_save()
 
 # runbox = RunBox.from_folder(f"n_{default_params['n_neurons']}_conn_scan")
 
-levels = [np.linspace(-0.1, 110, 20), np.linspace(-0.1, 2, 10) ]
-for extraction, lvls in zip(["final_activity", "final_isi_cv"], levels):
+levels = [np.linspace(-0.1, 110, 20), np.linspace(-0.1, 2, 10), np.linspace(0,1,20)]
+for extraction, lvls in zip(["final_activity", "final_isi_cv", "synchronicity"], levels):
     plt.figure()
     # Extract the data in a format system_id -> function -> population -> values
     results = runbox.get_extraction_triplets("exc_conn_p", "inh_conn_p", extraction)

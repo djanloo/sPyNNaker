@@ -12,7 +12,7 @@ from quantities import millisecond as ms
 
 import logging
 from rich.logging import RichHandler
-
+from sklearn.linear_model import LinearRegression
 
 _SIM_WAS_CHOSEN = False
 
@@ -197,3 +197,51 @@ def random_subsample_synchronicity(block, binsize_ms=1, subsamp_size=20, n_sampl
         return samples_activities
     else:
         return np.mean(np.std(samples_activities, axis=0))
+
+
+def potential_random_subsample_synchronicity(block, 
+                                             subsamp_sizes=[10, 20, 30, 40, 50, 60, 70],
+                                             bootstrap_trials=3
+                                             ):
+    
+    v = block.segments[0].filter(name="v")[0].magnitude.T
+    indexes = np.arange(v.shape[0])
+
+    syncs = np.zeros((len(subsamp_sizes), bootstrap_trials))
+    for size_i in range(len(subsamp_sizes)):
+        for bootstrap in range(bootstrap_trials):
+            np.random.shuffle(indexes)
+            subsamp_idxs = indexes[:subsamp_sizes[size_i]]
+            
+            sample_time_average = np.mean(v[subsamp_idxs], axis=0)
+            # logger.debug(f"sample time-average has shape {sample_time_average.shape}")   
+
+            variance_of_sample_mean = np.std(sample_time_average)**2
+            # logger.debug(f"time-variance of time-average is {variance_of_sample_mean}")
+
+            time_variance_of_single_neurons = np.std(v[subsamp_idxs], axis=1)**2
+            # logger.debug(f"time variance of single neurons have shape {time_variance_of_single_neurons.shape}")
+
+            mean_of_neural_variances = np.mean(time_variance_of_single_neurons)
+            # logger.debug(f"mean_of_neural_variances is {mean_of_neural_variances}")
+
+            syncs[size_i, bootstrap] = np.sqrt(variance_of_sample_mean/mean_of_neural_variances)
+            # logger.debug(f"sync of bootstrap {i} is {syncs[i]}")
+    
+    ## Bootstrap averages
+    syncs = np.mean(syncs, axis=-1)
+    logger.debug(f"bootstrap averages of sync is {syncs}")
+
+    ## Extrapolation
+    model = LinearRegression()
+    x = 1.0/np.sqrt(subsamp_sizes).reshape(-1,1)
+    y = syncs.reshape(-1,1)
+
+    model.fit(x,y)
+    logger.debug(f"Linear model of sync returned chi_inf = {model.intercept_} and a = {model.coef_}")
+    return model.intercept_[0]
+
+
+
+
+

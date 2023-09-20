@@ -9,13 +9,13 @@ from elephant.conversion import BinnedSpikeTrain
 from run_manager import LunchBox
 from local_utils import spiketrains_to_couples, avg_activity
 from local_utils import set_loggers; set_loggers()
-from local_utils import random_subsample_synchronicity
+from local_utils import random_subsample_synchronicity, potential_random_subsample_synchronicity
 
-lunchbox = LunchBox.from_folder("n_600_conn_scan")
+lunchbox = LunchBox.from_folder("n_700_conn_scan")
 logger=logging.getLogger("APPLICATION")
 
 def sync(block):
-    return random_subsample_synchronicity(block, n_samples=20, subsamp_size=20)
+    return potential_random_subsample_synchronicity(block)
 
 lunchbox.add_extraction(sync)
 lunchbox._extract()
@@ -34,21 +34,15 @@ plt.colorbar(mappable)
 
 plt.xlabel("Excitatory connectivity")
 plt.ylabel("Inhibitory connectivity")
-# sys_1 = 140338675003552 #low
-# sys_2 = 139992135052320
 
-# for sys in [sys_1, sys_2]:
-#     syn = sync(lunchbox.systems[sys].pops['exc'])
-#     plt.plot(np.mean(syn, axis=1))
 
-plt.figure(2)
+fig, axes = plt.subplots(2,1, sharex=True)
 
-for extr in [np.max, np.min]:
+for extr, ax in zip([np.max, np.min], axes):
     val = extr(data[data>0.0])
     for sys_id in lunchbox.systems.keys():
         if lunchbox.extractions[sys_id]['sync']['exc'] == val:
-            plt.scatter(*(spiketrains_to_couples(lunchbox.systems[sys_id].pops['exc'].segments[0].spiketrains).T),
-                        label=f"sync = {val:.2}", s=3, alpha=0.8)
+            samps = potential_random_subsample_synchronicity(lunchbox.systems[sys_id].pops['exc'])
             break
 plt.legend()
 plt.show()
