@@ -306,6 +306,9 @@ class LunchBox:
                         valid.append(self.systems[sys_id])
                 except KeyError as e:
                     logger.warning(f"Parameter {par} was not found in {self.systems[sys_id]}")
+        logger.debug(f"For region {extrema_dict} returning systems havinh params:")
+        for sys in valid:
+            logger.debug(sys.params_dict)
         return valid
 
 
