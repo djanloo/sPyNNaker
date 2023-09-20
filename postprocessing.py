@@ -9,13 +9,13 @@ from elephant.conversion import BinnedSpikeTrain
 from run_manager import LunchBox
 from local_utils import spiketrains_to_couples, avg_activity
 from local_utils import set_loggers; set_loggers()
-from local_utils import random_subsample_synchronicity, potential_random_subsample_synchronicity
+from local_utils import random_subsample_synchronicity, potential_random_subsample_synchronicity, deltasync
 
 lunchbox = LunchBox.from_folder("n_700_conn_scan")
 logger=logging.getLogger("APPLICATION")
 
 def sync(block):
-    return potential_random_subsample_synchronicity(block)
+    return deltasync(block, bootstrap_trials=20)
 
 lunchbox.add_extraction(sync)
 lunchbox._extract()
@@ -42,7 +42,10 @@ for extr, ax in zip([np.max, np.min], axes):
     val = extr(data[data>0.0])
     for sys_id in lunchbox.systems.keys():
         if lunchbox.extractions[sys_id]['sync']['exc'] == val:
-            samps = potential_random_subsample_synchronicity(lunchbox.systems[sys_id].pops['exc'])
+            sizes, deltas, intercept, coef = deltasync(lunchbox.systems[sys_id].pops['exc'], return_all=True, subsamp_sizes=[10,20,30,40,50,60,70,80,90, 100, 150], bootstrap_trials=20)
+            plt.plot(1.0/sizes, deltas)
+            xx = np.linspace(0,0.1, 10)
+            plt.plot(xx, intercept + coef*xx, label=f"sync={val}")
             break
-plt.legend()
+    plt.legend()
 plt.show()

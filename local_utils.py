@@ -242,6 +242,36 @@ def potential_random_subsample_synchronicity(block,
     return model.intercept_[0]
 
 
+def deltasync(block, subsamp_sizes=[10,20,30,40,50,60,70], bootstrap_trials=3, return_all=False):
+    v = block.segments[0].filter(name="v")[0].magnitude.T
+    indexes = np.arange(v.shape[0])
+
+    delta = np.zeros((len(subsamp_sizes), bootstrap_trials))
+    
+    for i in range(len(subsamp_sizes)):
+        for bootstrap in range(bootstrap_trials):
+            k = subsamp_sizes[i]
+            np.random.shuffle(indexes)
+            subsamp_idxs = indexes[:k]
+            sample_average = np.mean(v[subsamp_idxs], axis=0) # average on neurons
+            delta[i, bootstrap] = np.std(sample_average)**2 # variance over time
+
+    # Average on bootstraps
+    deltadelta = np.std(delta, axis=1)
+    delta = np.mean(delta, axis=1)
+    logger.debug(f"deltas are {delta} += {deltadelta}")
+
+    ## Extrapolation
+    model = LinearRegression()
+    x = 1.0/np.array(subsamp_sizes).reshape(-1,1)
+    y = delta.reshape(-1,1)
+
+    model.fit(x,y)
+    logger.debug(f"Linear model of sync returned chi_inf = {model.intercept_} and a = {model.coef_}")
+    if return_all:
+        return np.array(subsamp_sizes), delta, model.intercept_[0], model.coef_[0][0]
+    
+    return model.intercept_[0]
 
 
 
