@@ -294,6 +294,21 @@ class LunchBox:
             logger.info("saving LunchBox configuration")
             pickle.dump(self.box_params, boxpar_file)
     
+
+    def get_systems_in_region(self, extrema_dict):
+        valid = []
+        for sys_id in self.systems.keys():
+            params =self.systems[sys_id].params_dict
+            for par in extrema_dict.keys():
+                try:
+                    if params[par] > extrema_dict[par][0] and \
+                        params[par] < extrema_dict[par][1]:
+                        valid.append(self.systems[sys_id])
+                except KeyError as e:
+                    logger.warning(f"Parameter {par} was not found in {self.systems[sys_id]}")
+        return valid
+
+
     @classmethod
     def from_folder(cls, folder):
         lunchbox = cls(None, folder=folder)

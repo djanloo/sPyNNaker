@@ -9,13 +9,13 @@ from elephant.conversion import BinnedSpikeTrain
 from run_manager import LunchBox
 from local_utils import spiketrains_to_couples, avg_activity
 from local_utils import set_loggers; set_loggers()
-from local_utils import random_subsample_synchronicity, potential_random_subsample_synchronicity, deltasync
+from local_utils import random_subsample_synchronicity, chisync, deltasync
 
 lunchbox = LunchBox.from_folder("n_700_conn_scan")
 logger=logging.getLogger("APPLICATION")
 
 def sync(block):
-    return deltasync(block, bootstrap_trials=20)
+    return chisync(block, bootstrap_trials=20)
 
 lunchbox.add_extraction(sync)
 lunchbox._extract()
@@ -48,4 +48,15 @@ for extr, ax in zip([np.max, np.min], axes):
             plt.plot(xx, intercept + coef*xx, label=f"sync={val}")
             break
     plt.legend()
+
+plt.figure(3)
+region = dict(exc_conn_p=[0.65, 1], inh_conn_p=[0., 0.16])
+systems = lunchbox.get_systems_in_region(region)
+
+for sys in systems:
+    spikes = sys.pops['exc'].segments[0].spiketrains
+    plt.scatter(*(spiketrains_to_couples(spikes).T), marker=".", alpha=0.8, color="k")
+    plt.title(f"chisync is {chisync(sys.pops['exc'])}")
+    break
+
 plt.show()

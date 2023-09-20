@@ -41,6 +41,7 @@ W_INH = 51.0 *1e-3       # (uS)
 N_THALAMIC_CELLS = 20 
 THALAMIC_STIM_DUR = 50.    # (ms) duration of random stimulation
 THALAMIC_RATE = 100.       # (Hz) frequency of the random stimulation
+THALAMIC_CONNECTIVITY = 0.1
 
 def build_system(system_params):
     """Builds the system with parameters specified in system_params.
@@ -130,7 +131,7 @@ def build_system(system_params):
     # pops[f'thalamus'].record("spikes")
 
     rconn = 0.01
-    ext_conn = sim.FixedProbabilityConnector(rconn)
+    ext_conn = sim.FixedProbabilityConnector(THALAMIC_CONNECTIVITY)
 
     connections[f'ext2e'] = sim.Projection(
         pops[f'thalamus'], 

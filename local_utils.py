@@ -199,10 +199,10 @@ def random_subsample_synchronicity(block, binsize_ms=1, subsamp_size=20, n_sampl
         return np.mean(np.std(samples_activities, axis=0))
 
 
-def potential_random_subsample_synchronicity(block, 
-                                             subsamp_sizes=[10, 20, 30, 40, 50, 60, 70],
-                                             bootstrap_trials=3
-                                             ):
+def chisync(block, 
+            subsamp_sizes=[10, 20, 30, 40, 50, 60, 70],
+            bootstrap_trials=3
+            ):
     
     v = block.segments[0].filter(name="v")[0].magnitude.T
     indexes = np.arange(v.shape[0])
