@@ -136,7 +136,7 @@ class LunchBox:
         # Sets the simulator
         if simulator is not None:
             self.sim = simulator
-            self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay', 'rng_seeds']}
+            self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay']}
             self.sim.setup(**self.sim_params)
             self.neurons_per_core = box_params['neurons_per_core']
             if sim.__name__ == 'pyNN.spiNNaker':
