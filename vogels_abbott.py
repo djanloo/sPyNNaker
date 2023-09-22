@@ -15,8 +15,8 @@ import logging
 from local_utils import set_loggers; set_loggers()
 logger = logging.getLogger("NETWORK_BUILDING")
 
-rngseed = 98766987
-rng = NumpyRNG(seed=rngseed, parallel_safe=True)
+RNGSEED = 98766987
+rng = NumpyRNG(seed=RNGSEED, parallel_safe=True)
 
 ############ CONSTANTS #############
 CELLTYPE = sim.IF_cond_exp
@@ -61,12 +61,13 @@ def build_system(system_params):
     pops[f'exc'] = sim.Population(
                                     n_exc, 
                                     CELLTYPE(**CELL_PARAMS), 
-                                    label=f"exc_cells")
-
+                                    label=f"exc_cells",
+                                    seed=RNGSEED)
     pops[f'inh'] = sim.Population(
                                     n_inh, 
                                     CELLTYPE(**CELL_PARAMS), 
-                                    label=f"inh_cells")
+                                    label=f"inh_cells",
+                                    seed=RNGSEED)
 
     # pops[f'exc'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
     # pops[f'inh'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
@@ -86,11 +87,11 @@ def build_system(system_params):
     inh_synapses = sim.StaticSynapse(weight=W_INH, delay=system_params['synaptic_delay'])
 
     exc_conn = sim.FixedProbabilityConnector(system_params['exc_conn_p'], 
-                                             rng=rng # this raises ConfigurationException
+                                            #  rng=rng # this raises ConfigurationException
                                             )
     logger.info(f"Initialized [green]excitatory[/green] FixedProbabilityConnector with p = {system_params['exc_conn_p']:.3}", extra=dict(markup=True))
     inh_conn = sim.FixedProbabilityConnector(system_params['inh_conn_p'],
-                                             rng=rng # this raises ConfigurationException
+                                            #  rng=rng # this raises ConfigurationException
                                             )
     logger.info(f"Initialized [blue]inhibitory[/blue] FixedProbabilityConnector with p = {system_params['exc_conn_p']:.3}", extra=dict(markup=True))
 
