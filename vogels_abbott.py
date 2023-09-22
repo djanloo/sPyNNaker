@@ -15,6 +15,9 @@ import logging
 from local_utils import set_loggers; set_loggers()
 logger = logging.getLogger("NETWORK_BUILDING")
 
+rngseed = 98766987
+rng = NumpyRNG(seed=rngseed, parallel_safe=True)
+
 ############ CONSTANTS #############
 CELLTYPE = sim.IF_cond_exp
 CELL_PARAMS = dict(tau_m=20.0,# ms
@@ -72,7 +75,7 @@ def build_system(system_params):
 
     uniformDistr = RandomDistribution('uniform', 
                                     [CELL_PARAMS["v_reset"], CELL_PARAMS["v_thresh"]], 
-                                    #   rng=rng # this causes a ConfigurationException
+                                      rng=rng # this causes a ConfigurationException
                                     )
 
     pops[f'exc'].initialize(v=uniformDistr)
@@ -83,11 +86,11 @@ def build_system(system_params):
     inh_synapses = sim.StaticSynapse(weight=W_INH, delay=system_params['synaptic_delay'])
 
     exc_conn = sim.FixedProbabilityConnector(system_params['exc_conn_p'], 
-                                            #  rng=rng # this raises ConfigurationException
+                                             rng=rng # this raises ConfigurationException
                                             )
     logger.info(f"Initialized [green]excitatory[/green] FixedProbabilityConnector with p = {system_params['exc_conn_p']:.3}", extra=dict(markup=True))
     inh_conn = sim.FixedProbabilityConnector(system_params['inh_conn_p'],
-                                            #  rng=rng # this raises ConfigurationException
+                                             rng=rng # this raises ConfigurationException
                                             )
     logger.info(f"Initialized [blue]inhibitory[/blue] FixedProbabilityConnector with p = {system_params['exc_conn_p']:.3}", extra=dict(markup=True))
 
