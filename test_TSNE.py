@@ -31,7 +31,7 @@ lunchbox = LunchBox(sim, timestep=1,
                     time_scale_factor=50, # Defines the lunchbox where the systems will be runned on
                     duration=DURATION, 
                     min_delay=2,
-                    rng_seeds=[SEED],
+                    # rng_seeds=[SEED],
                     neurons_per_core=250,
                     folder=f"n_{params['n_neurons']}_conn_scan",
                     add_old = False
