@@ -128,7 +128,7 @@ class LunchBox:
     i.e. ones sharing duration, timescale and timestep.
     """
 
-    def __init__(self, simulator, folder="RMv2",  **box_params):
+    def __init__(self, simulator, folder="RMv2", add_old=True,  **box_params):
 
         self.box_params = box_params
         logger.info(f"Initialized run box with params: {self.box_params}")
@@ -136,7 +136,7 @@ class LunchBox:
         # Sets the simulator
         if simulator is not None:
             self.sim = simulator
-            self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay']}
+            self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay', 'rng_seeds']}
             self.sim.setup(**self.sim_params)
             self.neurons_per_core = box_params['neurons_per_core']
             if sim.__name__ == 'pyNN.spiNNaker':
@@ -157,6 +157,7 @@ class LunchBox:
         self._extraction_functions = []
 
         self.folder = folder
+        self.add_old = add_old
         try:
             os.mkdir(self.folder)
         except FileExistsError:
@@ -268,14 +269,15 @@ class LunchBox:
     def _save_systems(self):
         for sys in self.systems.values():
             sys.pupate()
-
-        if os.path.exists(f"{self.folder}/systems.pkl"):
-            logger.warning(f"Adding already existing systems...")
-            with open(f"{self.folder}/systems.pkl", "rb") as systems_file:
-                existing_systems = pickle.load(systems_file)
-                self.systems.update(existing_systems)
-            logger.warning(f"Added {len(existing_systems)} systems")
-
+        if self.add_old:
+            if os.path.exists(f"{self.folder}/systems.pkl"):
+                logger.warning(f"Adding already existing systems...")
+                with open(f"{self.folder}/systems.pkl", "rb") as systems_file:
+                    existing_systems = pickle.load(systems_file)
+                    self.systems.update(existing_systems)
+                logger.warning(f"Added {len(existing_systems)} systems")
+        else:
+            logger.warning(f"Old systems in folder {self.folder} have been overwritten since option add_old is False")
         logger.info("Saving systems...")
         with open(f"{self.folder}/systems.pkl", "wb") as systems_file:
             pickle.dump(self.systems, systems_file)
