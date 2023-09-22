@@ -76,7 +76,7 @@ def build_system(system_params):
 
     uniformDistr = RandomDistribution('uniform', 
                                     [CELL_PARAMS["v_reset"], CELL_PARAMS["v_thresh"]], 
-                                      rng=rng # this causes a ConfigurationException
+                                    #   rng=rng # this causes a ConfigurationException
                                     )
 
     pops[f'exc'].initialize(v=uniformDistr)
