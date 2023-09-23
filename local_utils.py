@@ -20,7 +20,7 @@ def set_loggers(lvl=logging.DEBUG):
     
     # Sets rich to be the handler of logger
     rich_handler = RichHandler()
-    rich_handler.setFormatter(logging.Formatter(fmt='%(message)s'))
+    rich_handler.setFormatter(logging.Formatter(fmt=f'[PID {os.getpid()}] %(message)s'))
 
     logging.basicConfig(format='%(message)s', 
                         handlers=[rich_handler])
@@ -30,6 +30,11 @@ def set_loggers(lvl=logging.DEBUG):
         _ = logging.getLogger(logger_name)
         
         _.setLevel(lvl)
+
+def set_logger_pid(logger):
+    logger = logging.getLogger()
+    logger.handlers[0].setFormatter(logging.Formatter(fmt=f'[PID {os.getpid()}] %(message)s'))
+
 
 set_loggers()
 logger = logging.getLogger("UTILS")

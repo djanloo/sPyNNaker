@@ -2,11 +2,18 @@
 from run_manager import PanHandler
 from vogels_abbott import build_system
 
-from local_utils import set_loggers; set_loggers()
 
-DURATION = 500
+from local_utils import avg_activity
 
-default_system_params = dict(n_neurons=100, 
+import logging
+from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
+logging.getLogger("RUN_MANAGER").setLevel(logging.DEBUG)
+logger=logging.getLogger("APPLICATION")
+logger.setLevel(logging.DEBUG)
+
+DURATION = 1000
+
+default_system_params = dict(n_neurons=1000, 
             exc_conn_p=0.03, 
             inh_conn_p=0.02,
             synaptic_delay=2
@@ -19,17 +26,22 @@ default_lunchbox_params = dict(
                     min_delay=2,
                     # rng_seeds=[SEED],
                     neurons_per_core=250,
-                    folder=f"panhandler_test",
+                    folder=f"ush",
                     add_old = False
                     )
 
 pan_handler = PanHandler(build_system)
 
-for ts in [0.2, 0.5, 1]:
-    lunchbox_pars = default_lunchbox_params.copy()
-    lunchbox_pars['timestep'] = ts
-    pan_handler.add_lunchbox_dict(lunchbox_pars)
+for _ in range(3):
+    for ts in [0.2, 0.5, 1]:
+        lunchbox_pars = default_lunchbox_params.copy()
+        lunchbox_pars['timestep'] = ts
+        pan_handler.add_lunchbox_dict(lunchbox_pars)
 
 pan_handler.add_system_dict(default_system_params)
+
+pan_handler.add_extraction(avg_activity)
+
 pan_handler.run()
+logger.info(f"Extractions:\n{pan_handler.extractions}")
 

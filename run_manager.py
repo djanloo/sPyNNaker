@@ -26,7 +26,7 @@ import numpy as np
 from pyNN.random import RandomDistribution
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 
-from local_utils import get_sim, num
+from local_utils import get_sim, num, set_logger_pid
 
 import logging
 from local_utils import set_loggers;
@@ -177,7 +177,7 @@ class LunchBox:
 
     def _extract(self):
 
-        logger.info("Starting functions extraction")
+        logger.info(f"Starting functions extraction ")
         self.extractions = dict()
         for system_id in self.systems.keys():
             self.extractions[system_id] = dict()
@@ -255,19 +255,30 @@ class LunchBox:
 
 
         logger.info(f"Running lunchbox composed of {len(self.systems)} systems ({total_neurons} total neurons) for {self.duration} timesteps")
+        logger.info(f"Extractions functions are: {[f.__name__ for f in self._extraction_functions]}")
         start = time.perf_counter()
         self.sim.run(self.duration)
         self._run_time = time.perf_counter() - start
-        logger.info(f"Simulation took in {self._run_time} seconds")
+        logger.info(f"Simulation took {self._run_time:.1f} seconds")
 
-    def extract_and_save(self):
-        self._save_systems()
-        self._extract()
-        self._save_configs()
-    
-    def _save_systems(self):
+    def extract_and_save(self, save_pops=False, save_extraction_functions=False):
+
+        # Pupates each system fro population to neo_core block
         for sys in self.systems.values():
             sys.pupate()
+
+        if save_pops:
+            self._save_systems()
+
+        self._extract()
+
+        if save_extraction_functions:
+            self._save_extraction_functions()
+
+        self._save_results()
+    
+    def _save_systems(self):
+
         if self.add_old:
             if os.path.exists(f"{self.folder}/systems.pkl"):
                 logger.warning(f"Adding already existing systems...")
@@ -281,20 +292,20 @@ class LunchBox:
         with open(f"{self.folder}/systems.pkl", "wb") as systems_file:
             pickle.dump(self.systems, systems_file)
 
-    def _save_configs(self):
+    def _save_results(self):
         
         with open(f"{self.folder}/extractions.pkl", "wb") as extr_file:
-            logger.info("saving LunchBox extractions")
+            logger.info(f"saving LunchBox extractions in {self.folder}/extractions.pkl")
             pickle.dump(self.extractions, extr_file)
-        
-        with open(f"{self.folder}/extractions_functions.pkl", "wb") as extrf_file:
-            logger.info("saving LunchBox extractions functions")
-            pickle.dump(self._extraction_functions, extrf_file)
 
         with open(f"{self.folder}/lunchbox_conf.pkl", "wb") as boxpar_file:
-            logger.info("saving LunchBox configuration")
+            logger.info(f"saving LunchBox configuration {self.folder}/lunchbox_conf.pkl")
             pickle.dump(self.box_params, boxpar_file)
     
+    def _save_extraction_functions(self):
+        with open(f"{self.folder}/extractions_functions.pkl", "wb") as extrf_file:
+            logger.info(f"saving LunchBox extractions functions in {self.folder}/extractions_functions.pkl")
+            pickle.dump(self._extraction_functions, extrf_file)
 
     def get_systems_in_region(self, extrema_dict):
         systems_in_region = []
@@ -346,6 +357,7 @@ class PanHandler:
         self.build_function = build_function  
         self.system_dicts = []
         self.lunchboxes_dicts = []
+        self._extraction_functions = []
         self.folder= folder
 
         try:
@@ -353,13 +365,20 @@ class PanHandler:
         except FileExistsError:
             pass
 
+        self._clean_folder()
+
     def add_system_dict(self, system_dict):
         self.system_dicts.append(system_dict)
 
     def add_lunchbox_dict(self, lunchbox_dict):
         self.lunchboxes_dicts.append(lunchbox_dict)
 
+    def add_extraction(self, func):
+        self._extraction_functions.append(func)
+
     def run(self):
+        self._run_time = perf_counter()
+
         logger.info("Starting lunchboxes having:")
         for lbd in self.lunchboxes_dicts:
             logger.info(lbd)
@@ -375,6 +394,7 @@ class PanHandler:
                                   args=(self.build_function, 
                                         lbd, 
                                         self.system_dicts,
+                                        self._extraction_functions,
                                         self.folder))
             processes.append(p)
             p.start()
@@ -382,17 +402,62 @@ class PanHandler:
         for p in processes:
             p.join()
 
-    @classmethod
-    def _create_lunchbox_run_and_save(cls, build_func, lunchbox_dict, system_dicts, folder):
-        logger.info(f"creating lunchbox for pid {os.getpid()}")
+        self._extract()
+        self._run_time = perf_counter() - self._run_time
 
-        lunchbox_dict['folder'] = os.path.join(folder, lunchbox_dict['folder'] + str(os.getpid()))
+        logger.info(f"Whole PanHandler took {self._run_time:.1f} seconds")
+
+    @classmethod
+    def _create_lunchbox_run_and_save(cls, 
+                                        build_func, 
+                                        lunchbox_dict, 
+                                        system_dicts,
+                                        extractions, 
+                                        folder):
+        
+        set_logger_pid(logger)
+
+        lunchbox_dict['folder'] = os.path.join(folder, str(os.getpid()))
 
         lb = LunchBox(**lunchbox_dict)
         for sys_dict in system_dicts:
             lb.add_system(System(build_func, sys_dict))
         
+        for extr in extractions:
+            lb.add_extraction(extr)
+
         lb.run()
         lb.extract_and_save()
 
-        
+    def _extract(self):
+        self.extractions = dict()
+        logger.info(f"Starting gathering extractions for PanHandler")
+        for subf in os.listdir(self.folder):
+            logger.info(f"Gathering {self.folder}/{subf}")
+            if os.path.isdir(os.path.join(self.folder, subf)):
+                self.extractions[subf] = dict()
+                with open(f"{self.folder}/{subf}/extractions.pkl", "rb") as f:
+                    self.extractions[subf]['extractions'] = pickle.load(f)
+                
+                with open(f"{self.folder}/{subf}/lunchbox_conf.pkl", "rb") as f:
+                    self.extractions[subf]['lunchbox_conf'] = pickle.load(f)
+
+    def _clean_folder(self):
+        logger.info(f"CLeaning folder {self.folder}")
+        for subfolder in os.listdir(self.folder):
+            if not os.path.isdir(os.path.join(self.folder, subfolder)):
+                logger.debug(f"{subfolder} is not a subfolder. skipping.")
+                continue
+
+            logger.info(f"Deleting subfolder <{subfolder}>")
+
+            for file in os.listdir(os.path.join(self.folder, subfolder)):
+                file_path = os.path.join(self.folder, subfolder, file)
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                    elif os.path.isdir(file_path):
+                        os.rmdir(file_path)
+                except Exception as e:
+                    logger.warning(f"Exception was raised when deleting {file_path}: {e}")
+            os.rmdir(os.path.join(self.folder, subfolder))
