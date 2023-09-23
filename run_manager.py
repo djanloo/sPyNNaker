@@ -19,7 +19,7 @@ DATE:   12/09/23
 import os
 import dill as pickle
 import time
-import pathos.multiprocessing as mp
+import multiprocessing as mp
 from time import perf_counter
 
 import numpy as np
@@ -27,7 +27,6 @@ from pyNN.random import RandomDistribution
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 
 from local_utils import get_sim, num
-sim = get_sim()
 
 import logging
 from local_utils import set_loggers;
@@ -128,14 +127,14 @@ class LunchBox:
     i.e. ones sharing duration, timescale and timestep.
     """
 
-    def __init__(self, simulator, folder="RMv2", add_old=True,  **box_params):
-
+    def __init__(self, folder="RMv2", add_old=True,  **box_params):
+        
         self.box_params = box_params
         logger.info(f"Initialized run box with params: {self.box_params}")
-
+        sim = get_sim()
         # Sets the simulator
-        if simulator is not None:
-            self.sim = simulator
+        if sim is not None:
+            self.sim = sim
             self.sim_params = {par:box_params[par] for par in ['timestep', 'time_scale_factor', 'min_delay']}
             self.sim.setup(**self.sim_params)
             self.neurons_per_core = box_params['neurons_per_core']
@@ -338,3 +337,62 @@ class LunchBox:
             lunchbox._extraction_functions = pickle.load(extrf_file)
         
         return lunchbox
+
+
+class PanHandler:
+
+    def __init__(self, build_function, folder="pan_handler"):
+
+        self.build_function = build_function  
+        self.system_dicts = []
+        self.lunchboxes_dicts = []
+        self.folder= folder
+
+        try:
+            os.mkdir(folder)
+        except FileExistsError:
+            pass
+
+    def add_system_dict(self, system_dict):
+        self.system_dicts.append(system_dict)
+
+    def add_lunchbox_dict(self, lunchbox_dict):
+        self.lunchboxes_dicts.append(lunchbox_dict)
+
+    def run(self):
+        logger.info("Starting lunchboxes having:")
+        for lbd in self.lunchboxes_dicts:
+            logger.info(lbd)
+
+        logger.info("Each lunchbox has systems having params:")
+        for sd in self.system_dicts:
+            logger.info(sd)
+
+
+        processes = []
+        for lbd in self.lunchboxes_dicts:
+            p = mp.Process(target=self.__class__._create_lunchbox_run_and_save, 
+                                  args=(self.build_function, 
+                                        lbd, 
+                                        self.system_dicts,
+                                        self.folder))
+            processes.append(p)
+            p.start()
+        
+        for p in processes:
+            p.join()
+
+    @classmethod
+    def _create_lunchbox_run_and_save(cls, build_func, lunchbox_dict, system_dicts, folder):
+        logger.info(f"creating lunchbox for pid {os.getpid()}")
+
+        lunchbox_dict['folder'] = os.path.join(folder, lunchbox_dict['folder'] + str(os.getpid()))
+
+        lb = LunchBox(**lunchbox_dict)
+        for sys_dict in system_dicts:
+            lb.add_system(System(build_func, sys_dict))
+        
+        lb.run()
+        lb.extract_and_save()
+
+        

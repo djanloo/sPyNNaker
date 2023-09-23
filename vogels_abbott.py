@@ -61,13 +61,16 @@ def build_system(system_params):
     pops[f'exc'] = sim.Population(
                                     n_exc, 
                                     CELLTYPE(**CELL_PARAMS), 
-                                    label=f"exc_cells",
-                                    seed=RNGSEED)
+                                    label=f"exc_cells")
     pops[f'inh'] = sim.Population(
                                     n_inh, 
                                     CELLTYPE(**CELL_PARAMS), 
-                                    label=f"inh_cells",
-                                    seed=RNGSEED)
+                                    label=f"inh_cells")
+    try:
+        pops['exc'].set(seed=RNGSEED)
+        pops['inh'].set(seed=RNGSEED)
+    except Exception as e:
+        logger.warn(f"Exception raised when setting the seed of populations: {e}")
 
     # pops[f'exc'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
     # pops[f'inh'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
