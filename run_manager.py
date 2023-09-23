@@ -22,7 +22,9 @@ import time
 import multiprocessing as mp
 from time import perf_counter
 
+
 import numpy as np
+import pandas as pd
 from pyNN.random import RandomDistribution
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 
@@ -31,6 +33,8 @@ from local_utils import get_sim, num, set_logger_pid
 import logging
 from local_utils import set_loggers;
 set_loggers()
+
+LUNCHBOX_PARAMS = ['duration', 'timestep', 'time_scale_factor', 'min_delay', 'neurons_per_core']
 
 logger = logging.getLogger("RUN_MANAGER")
 
@@ -56,7 +60,7 @@ class System:
     @property
     def id(self):
         if self._id is None:
-            self._id = id(self)
+            self._id =f"{os.getpid()}-{id(self)}"
         return self._id
 
     @id.setter
@@ -461,3 +465,14 @@ class PanHandler:
                 except Exception as e:
                     logger.warning(f"Exception was raised when deleting {file_path}: {e}")
             os.rmdir(os.path.join(self.folder, subfolder))
+
+
+def data_flattener(dizionario, prefisso=None):
+    lista_di_liste = []
+    for chiave, valore in dizionario.items():
+        chiave_completa = prefisso + (chiave,) if prefisso else (chiave,)
+        if isinstance(valore, dict):
+            lista_di_liste.extend(data_flattener(valore, chiave_completa))
+        else:
+            lista_di_liste.append(list(chiave_completa) + [valore])
+    return lista_di_liste

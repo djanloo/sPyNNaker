@@ -45,3 +45,7 @@ pan_handler.add_extraction(avg_activity)
 pan_handler.run()
 logger.info(f"Extractions:\n{pan_handler.extractions}")
 
+
+from run_manager import data_flattener
+logger.info(data_flattener(pan_handler.extractions))
+
