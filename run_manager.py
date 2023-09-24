@@ -229,7 +229,7 @@ class LunchBox:
         try:
             pops = self.extractions[list(self.systems.keys())[0]][extraction].keys()
         except KeyError as e:
-            logger.warning(f"An error triggered the recomputation of the extactions: {e}")
+            logger.warning(f"An error triggered the recomputation of the extractions: {e}")
             self._extract()
             pops = self.extractions[list(self.systems.keys())[0]][extraction].keys()
 
@@ -309,6 +309,12 @@ class LunchBox:
         with open(f"{self.folder}/lunchbox_conf.pkl", "wb") as boxpar_file:
             logger.info(f"saving LunchBox configuration {self.folder}/lunchbox_conf.pkl")
             pickle.dump(self.box_params, boxpar_file)
+
+        with open(f"{self.folder}/systems_conf.pkl", "wb") as syspar_file:
+            sys_params = {sys_id:self.systems[sys_id].params_dict for sys_id in self.systems.keys()}
+            logger.info(f"saving Systems configurations {self.folder}/systems_conf.pkl")
+            pickle.dump(sys_params, syspar_file)
+
     
     def _save_extraction_functions(self):
         with open(f"{self.folder}/extractions_functions.pkl", "wb") as extrf_file:
@@ -500,15 +506,21 @@ class DataGatherer:
     def gather(self):
 
         for sub in self.subfolders:
+
             sub_path = os.path.join(self.folder, sub)
 
+            ### Infos abot the lunchbox
             with open(os.path.join(sub_path, "lunchbox_conf.pkl"), "rb") as conf_file:
-                conf_dict = pickle.load(conf_file)
+                lunchbox_params = pickle.load(conf_file)
+            lunchbox_params['lunchbox_id'] = sub
+            logger.info(f"Found lunchbox {sub} with params: \n{lunchbox_params}")
 
-            conf_dict['lunchbox_id'] = sub
+            ## Infos about systems
+            with open(os.path.join(sub_path, "systems_conf.pkl"), "rb") as sysfile:
+                sys_params = pickle.load(sysfile)
 
-            logger.info(f"Found lunchbox {sub} with params: \n{conf_dict}")
 
+            ## Infos about extractions
             with open(os.path.join(sub_path, "extractions.pkl"), "rb") as extr:
                 extr_dict = pickle.load(extr)
             
@@ -523,7 +535,10 @@ class DataGatherer:
                         row['pop'] = pop
                         row['extraction'] =  extr_dict[sys_id][func][pop]
 
-                        row.update(conf_dict)
+
+                        row.update(lunchbox_params)
+                        row.update(sys_params[sys_id])
+
                         row = pd.DataFrame(row, index=[0])
                         self.database = pd.concat([self.database, row], ignore_index=True)
 

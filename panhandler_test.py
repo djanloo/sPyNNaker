@@ -16,7 +16,7 @@ logger.setLevel(logging.DEBUG)
 
 DURATION = 1000
 
-default_system_params = dict(n_neurons=1000, 
+default_system_params = dict(n_neurons=100, 
             exc_conn_p=0.03, 
             inh_conn_p=0.02,
             synaptic_delay=2
