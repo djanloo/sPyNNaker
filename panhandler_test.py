@@ -1,7 +1,10 @@
 # Test PanHandler
-from run_manager import PanHandler
-from vogels_abbott import build_system
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
 
+from run_manager import PanHandler, DataGatherer
+from vogels_abbott import build_system
 
 from local_utils import avg_activity
 
@@ -32,20 +35,26 @@ default_lunchbox_params = dict(
 
 pan_handler = PanHandler(build_system)
 
-for _ in range(3):
-    for ts in [0.2, 0.5, 1]:
-        lunchbox_pars = default_lunchbox_params.copy()
-        lunchbox_pars['timestep'] = ts
-        pan_handler.add_lunchbox_dict(lunchbox_pars)
+for ts in [.1, .2, .3, .5, 1]:
+    lunchbox_pars = default_lunchbox_params.copy()
+    lunchbox_pars['timestep'] = ts
+    pan_handler.add_lunchbox_dict(lunchbox_pars)
 
-pan_handler.add_system_dict(default_system_params)
+for _ in range(4):
+    pan_handler.add_system_dict(default_system_params)
 
 pan_handler.add_extraction(avg_activity)
 
 pan_handler.run()
-logger.info(f"Extractions:\n{pan_handler.extractions}")
 
 
-from run_manager import data_flattener
-logger.info(data_flattener(pan_handler.extractions))
+dg = DataGatherer(pan_handler.folder)
+db = dg.gather()
+logger.info(f"Database cols: {db.columns}")
+
+plt.plot(db[(db["pop"] == 'exc')&(db.func == 'avg_activity')].timestep, db[(db['pop'] == 'exc')&(db.func == 'avg_activity')].extraction, ls="", marker=".")
+plt.show()
+
+
+
 

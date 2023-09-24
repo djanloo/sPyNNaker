@@ -38,6 +38,8 @@ LUNCHBOX_PARAMS = ['duration', 'timestep', 'time_scale_factor', 'min_delay', 'ne
 
 logger = logging.getLogger("RUN_MANAGER")
 
+database = pd.DataFrame()
+
 class System:
     """A system is a collection of populations that can interact only among themselves"""
     def __init__(self, build_method, dict_of_params):
@@ -263,6 +265,8 @@ class LunchBox:
         start = time.perf_counter()
         self.sim.run(self.duration)
         self._run_time = time.perf_counter() - start
+        self.box_params['run_time'] = self._run_time
+
         logger.info(f"Simulation took {self._run_time:.1f} seconds")
 
     def extract_and_save(self, save_pops=False, save_extraction_functions=False):
@@ -381,9 +385,11 @@ class PanHandler:
         self._extraction_functions.append(func)
 
     def run(self):
+        self._check_lunchboxes()
+
         self._run_time = perf_counter()
 
-        logger.info("Starting lunchboxes having:")
+        logger.info(f"Starting {len(self.lunchboxes_dicts)} lunchboxes having:")
         for lbd in self.lunchboxes_dicts:
             logger.info(lbd)
 
@@ -410,6 +416,20 @@ class PanHandler:
         self._run_time = perf_counter() - self._run_time
 
         logger.info(f"Whole PanHandler took {self._run_time:.1f} seconds")
+
+    def _check_lunchboxes(self):
+        logger.info(f"Checking {len(self.lunchboxes_dicts)} lunchboxes...")
+
+        is_duplicate = np.zeros(len(self.lunchboxes_dicts), int)
+
+        for i in range(len(self.lunchboxes_dicts)):
+            for j in range(i+1, len(self.lunchboxes_dicts)):
+                if self.lunchboxes_dicts[i] == self.lunchboxes_dicts[j]:
+                    is_duplicate[j] = 1
+
+        if np.sum(is_duplicate) > 0:
+            logger.warning(f"Found {np.sum(is_duplicate)} duplicate lunchboxes.\nConsider adding duplicate systems to optimize computing.")
+
 
     @classmethod
     def _create_lunchbox_run_and_save(cls, 
@@ -467,12 +487,46 @@ class PanHandler:
             os.rmdir(os.path.join(self.folder, subfolder))
 
 
-def data_flattener(dizionario, prefisso=None):
-    lista_di_liste = []
-    for chiave, valore in dizionario.items():
-        chiave_completa = prefisso + (chiave,) if prefisso else (chiave,)
-        if isinstance(valore, dict):
-            lista_di_liste.extend(data_flattener(valore, chiave_completa))
-        else:
-            lista_di_liste.append(list(chiave_completa) + [valore])
-    return lista_di_liste
+class DataGatherer:
+
+    def __init__(self, folder):
+        self.folder = folder
+
+        self.subfolders = [subf for subf in os.listdir(self.folder) if os.path.isdir(os.path.join(self.folder, subf ))]
+        logger.info(f"Gatherer has found subfolders:\n {self.subfolders}")
+
+        self.database = pd.DataFrame()
+
+    def gather(self):
+
+        for sub in self.subfolders:
+            sub_path = os.path.join(self.folder, sub)
+
+            with open(os.path.join(sub_path, "lunchbox_conf.pkl"), "rb") as conf_file:
+                conf_dict = pickle.load(conf_file)
+
+            conf_dict['lunchbox_id'] = sub
+
+            logger.info(f"Found lunchbox {sub} with params: \n{conf_dict}")
+
+            with open(os.path.join(sub_path, "extractions.pkl"), "rb") as extr:
+                extr_dict = pickle.load(extr)
+            
+            logger.info(f"For lunchbox {sub} found extractions: \n{extr_dict}")
+
+            for sys_id in extr_dict.keys():
+                for func in extr_dict[sys_id].keys():
+                    for pop in extr_dict[sys_id][func].keys():
+                        row = dict()
+                        row['sys_id'] = sys_id
+                        row['func'] = func
+                        row['pop'] = pop
+                        row['extraction'] =  extr_dict[sys_id][func][pop]
+
+                        row.update(conf_dict)
+                        row = pd.DataFrame(row, index=[0])
+                        self.database = pd.concat([self.database, row], ignore_index=True)
+
+        logger.info(f"Built database: \n{self.database}")
+        self.database.to_csv("A")
+        return self.database
