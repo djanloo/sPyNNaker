@@ -528,5 +528,5 @@ class DataGatherer:
                         self.database = pd.concat([self.database, row], ignore_index=True)
 
         logger.info(f"Built database: \n{self.database}")
-        self.database.to_csv("A")
+        self.database.to_csv("A.csv")
         return self.database
