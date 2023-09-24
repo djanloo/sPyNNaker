@@ -29,7 +29,6 @@ default_lunchbox_params = dict(
                     min_delay=2,
                     # rng_seeds=[SEED],
                     neurons_per_core=250,
-                    folder=f"ush",
                     add_old = False
                     )
 
