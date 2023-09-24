@@ -38,11 +38,12 @@ pan_handler = PanHandler(build_system)
 for ts in [.1, .2, .3, .4, .5, .6, .7, .8, .9,  1]:
     lunchbox_pars = default_lunchbox_params.copy()
     lunchbox_pars['timestep'] = ts
+    lunchbox_pars['min_delay'] = int(lunchbox_pars['min_delay']/ts)*ts
     pan_handler.add_lunchbox_dict(lunchbox_pars)
 
 for _ in range(5):
     pan_handler.add_system_dict(default_system_params)
-    
+
 pan_handler.add_extraction(avg_activity)
 
 pan_handler.run()
