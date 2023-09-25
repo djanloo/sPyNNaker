@@ -10,7 +10,7 @@ from local_utils import avg_activity, avg_isi_cv
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
-logging.getLogger("RUN_MANAGER").setLevel(logging.DEBUG)
+logging.getLogger("RUN_MANAGER").setLevel(logging.INFO)
 logger=logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
@@ -42,7 +42,7 @@ for ts in [.1, .2, .3, .4, .5, .6, .7, .8, .9,  1]:
     pan_handler.add_lunchbox_dict(lunchbox_pars)
 
 for _ in range(5):
-    for exc_conn_p in np.linspace(0.1, 0.4, 3):
+    for exc_conn_p in np.linspace(0.1, 0.4, 5):
         params = default_system_params.copy()
         params['exc_conn_p'] = exc_conn_p
         pan_handler.add_system_dict(params)

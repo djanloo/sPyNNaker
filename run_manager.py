@@ -513,7 +513,7 @@ class DataGatherer:
             with open(os.path.join(sub_path, "lunchbox_conf.pkl"), "rb") as conf_file:
                 lunchbox_params = pickle.load(conf_file)
             lunchbox_params['lunchbox_id'] = sub
-            logger.info(f"Found lunchbox {sub} with params: \n{lunchbox_params}")
+            logger.debug(f"Found lunchbox {sub} with params: \n{lunchbox_params}")
 
             ## Infos about systems
             with open(os.path.join(sub_path, "systems_conf.pkl"), "rb") as sysfile:
@@ -524,7 +524,7 @@ class DataGatherer:
             with open(os.path.join(sub_path, "extractions.pkl"), "rb") as extr:
                 extr_dict = pickle.load(extr)
             
-            logger.info(f"For lunchbox {sub} found extractions: \n{extr_dict}")
+            logger.debug(f"For lunchbox {sub} found extractions: \n{extr_dict}")
 
             for sys_id in extr_dict.keys():
                 for func in extr_dict[sys_id].keys():
