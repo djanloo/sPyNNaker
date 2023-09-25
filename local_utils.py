@@ -160,8 +160,8 @@ def avg_isi_cv(block, t_start=100, t_end=None):
                 logger.warning(f"CV of neuron {neuron_idx} turned out to be NaN:\nspikes={spiketimes}\nisi={isi}")
             cvs += [current_cv]
     if excluded > 0.1*n_neurons:
-        logger.warning(f"More than 10% of neurons were excluded from ISI CV computation ({excluded} over {n_neurons})")
-        logger.warning(f"Average ISI CV is {np.mean(cvs)}")
+        logger.debug(f"More than 10% of neurons were excluded from ISI CV computation ({excluded} over {n_neurons})")
+        logger.debug(f"Average ISI CV is {np.mean(cvs)}")
     logger.debug(f"CVs are {cvs} (total of {len(cvs)}) (avg: {np.mean(cvs)})")
     return np.mean(cvs)
 
