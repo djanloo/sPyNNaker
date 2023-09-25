@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from run_manager import PanHandler, DataGatherer
 from vogels_abbott import build_system
 
-from local_utils import avg_activity
+from local_utils import avg_activity, avg_isi_cv
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
@@ -16,7 +16,7 @@ logger.setLevel(logging.DEBUG)
 
 DURATION = 1000
 
-default_system_params = dict(n_neurons=100, 
+default_system_params = dict(n_neurons=1000, 
             exc_conn_p=0.03, 
             inh_conn_p=0.02,
             synaptic_delay=2
@@ -42,20 +42,30 @@ for ts in [.1, .2, .3, .4, .5, .6, .7, .8, .9,  1]:
     pan_handler.add_lunchbox_dict(lunchbox_pars)
 
 for _ in range(5):
-    pan_handler.add_system_dict(default_system_params)
+    for exc_conn_p in np.linspace(0.1, 0.4, 3):
+        params = default_system_params.copy()
+        params['exc_conn_p'] = exc_conn_p
+        pan_handler.add_system_dict(params)
 
 pan_handler.add_extraction(avg_activity)
+pan_handler.add_extraction(avg_isi_cv)
 
 pan_handler.run()
-
 
 dg = DataGatherer(pan_handler.folder)
 db = dg.gather()
 logger.info(f"Database cols: {db.columns}")
 
-plt.plot(db[(db["pop"] == 'exc')&(db.func == 'avg_activity')].timestep, db[(db['pop'] == 'exc')&(db.func == 'avg_activity')].extraction, ls="", marker=".")
-plt.show()
+plt.plot(db[(db["pop"] == 'exc')&(db.func == 'avg_isi_cv')].timestep, 
+         db[(db['pop'] == 'exc')&(db.func == 'avg_isi_cv')].extraction, 
+         ls="", marker=".", label="ISI CV")
 
+plt.plot(db[(db["pop"] == 'exc')&(db.func == 'avg_activity')].timestep, 
+         db[(db['pop'] == 'exc')&(db.func == 'avg_activity')].extraction, 
+         ls="", marker=".", label="ISI CV")
+
+plt.legend()
+plt.savefig("test_panhandler.png")
 
 
 
