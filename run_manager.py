@@ -77,7 +77,7 @@ class System:
             try:
                 self.pops[popname] = self.pops[popname].get_data()
             except ConfigurationException as e:
-                logger.warning(f"An error lead to the deletion of population {popname} af system {self}\nError was: {e}")
+                logger.debug(f"An error lead to the deletion of population {popname} af system {self}\nError was: {e}")
                 bad_populations += [popname]
 
         for popname in bad_populations:
@@ -94,8 +94,8 @@ class System:
             try:
                 extraction[pop] = function(self.pops[pop])
             except Exception as e:
-                logger.error(f"Function evaluation on population <{pop}> raised: {e}")
-                logger.warning(f"Skipping evaluation of <{function.__name__}> on <{pop}>")
+                logger.debug(f"Function evaluation on population <{pop}> raised: {e}")
+                logger.debug(f"Skipping evaluation of <{function.__name__}> on <{pop}>")
         return extraction
 
 
