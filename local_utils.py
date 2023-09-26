@@ -283,16 +283,83 @@ def deltasync(block, subsamp_sizes=[10,20,30,40,50,60,70], bootstrap_trials=3, r
     
     return model.intercept_[0]
 
-def active_density(block, n_spikes=10):
+def active_fraction(block, n_spikes=10, t_start=50, t_end=None):
     spike_train_list = block.segments[0].spiketrains
     n_neurons = block.annotations['size']
 
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
     active = 0
     for spikes in spike_train_list:
-        if len(spikes) > n_spikes:
+        spiketimes = spikes.magnitude[spikes.magnitude > t_start]
+        if len(spiketimes) > n_spikes:
             active += 1
 
-    return active/n_neurons 
+    return active/n_neurons
+
+def rate_of_active_avg(block, n_spikes=10, t_start=50, t_end=None):
+    spike_train_list = block.segments[0].spiketrains
+
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
+    fr = []
+    for spikes in spike_train_list:
+        spiketimes = spikes.magnitude[spikes.magnitude > t_start]
+        if len(spiketimes) > n_spikes:
+            fr += [len(spiketimes)/(t_end - t_start)*1e3]
+    
+    return np.mean(fr)
+
+
+def rate_of_active_std(block, n_spikes=10, t_start=50, t_end=None):
+    spike_train_list = block.segments[0].spiketrains
+
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
+    fr = []
+    for spikes in spike_train_list:
+        spiketimes = spikes.magnitude[spikes.magnitude > t_start]
+        if len(spiketimes) > n_spikes:
+            fr += [len(spiketimes)/(t_end - t_start)*1e3]
+    
+    return np.std(fr)
+        
+
+def isi_active_avg_tstd(block, t_start=50, t_end = None, n_spikes=10):
+
+    spike_train_list = block.segments[0].spiketrains
+
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
+    active = 0.0
+    isi_variance = 0.0
+    for spikes in spike_train_list:
+        spiketimes = spikes.magnitude[spikes.magnitude > t_start]
+        if len(spiketimes) > n_spikes:
+            active += 1
+            isi_variance += np.std(np.diff(spiketimes))
+    
+    return isi_variance/active
+
+def isi_active_avg_mean(block, t_start=50, t_end = None, n_spikes=10):
+    spike_train_list = block.segments[0].spiketrains
+
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
+    active = 0.0
+    isi_mean = 0.0
+    for spikes in spike_train_list:
+        spiketimes = spikes.magnitude[spikes.magnitude > t_start]
+        if len(spiketimes) > n_spikes:
+            active += 1
+            isi_mean += np.mean(np.diff(spiketimes))
+    
+    return isi_mean/active
 
 
 

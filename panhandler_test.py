@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from run_manager import PanHandler, DataGatherer
 from vogels_abbott import build_system
 
-from local_utils import avg_activity, avg_isi_cv, active_density
+from local_utils import avg_activity, avg_isi_cv, active_fraction, rate_of_active_avg, rate_of_active_std, isi_active_avg_mean, isi_active_avg_tstd
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
@@ -47,9 +47,10 @@ for _ in range(2):
         params['exc_conn_p'] = exc_conn_p
         pan_handler.add_system_dict(params)
 
-pan_handler.add_extraction(avg_activity)
-pan_handler.add_extraction(avg_isi_cv)
-pan_handler.add_extraction(active_density)
+for ext in [avg_activity, active_fraction, rate_of_active_avg, rate_of_active_std,
+            isi_active_avg_tstd , isi_active_avg_mean, avg_isi_cv]:
+
+    pan_handler.add_extraction(ext)
 
 pan_handler.run()
 
