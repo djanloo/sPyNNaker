@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from run_manager import PanHandler, DataGatherer
 from vogels_abbott import build_system
 
-from local_utils import avg_activity, avg_isi_cv
+from local_utils import avg_activity, avg_isi_cv, active_density
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
@@ -16,7 +16,7 @@ logger.setLevel(logging.DEBUG)
 
 DURATION = 1000
 
-default_system_params = dict(n_neurons=1000, 
+default_system_params = dict(n_neurons=200, 
             exc_conn_p=0.03, 
             inh_conn_p=0.02,
             synaptic_delay=2
@@ -35,13 +35,13 @@ default_lunchbox_params = dict(
 pan_handler = PanHandler(build_system)
 
 
-for ts in [.1, .2, .3, .4, .5, .6, .7, .8, .9,  1]:
+for ts in [ .9,  1]:
     lunchbox_pars = default_lunchbox_params.copy()
     lunchbox_pars['timestep'] = ts
     lunchbox_pars['min_delay'] = int(lunchbox_pars['min_delay']/ts)*ts
     pan_handler.add_lunchbox_dict(lunchbox_pars)
 
-for _ in range(5):
+for _ in range(2):
     for exc_conn_p in np.linspace(0.1, 0.4, 5):
         params = default_system_params.copy()
         params['exc_conn_p'] = exc_conn_p
@@ -49,6 +49,7 @@ for _ in range(5):
 
 pan_handler.add_extraction(avg_activity)
 pan_handler.add_extraction(avg_isi_cv)
+pan_handler.add_extraction(active_density)
 
 pan_handler.run()
 

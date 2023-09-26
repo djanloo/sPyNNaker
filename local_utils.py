@@ -283,5 +283,17 @@ def deltasync(block, subsamp_sizes=[10,20,30,40,50,60,70], bootstrap_trials=3, r
     
     return model.intercept_[0]
 
+def active_density(block, n_spikes=10):
+    spike_train_list = block.segments[0].spiketrains
+    n_neurons = block.annotations['size']
+
+    active = 0
+    for spikes in spike_train_list:
+        if len(spikes) < n_spikes:
+            active += 1
+
+    return active/n_neurons 
+
+
 
 
