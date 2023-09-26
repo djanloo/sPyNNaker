@@ -289,7 +289,7 @@ def active_density(block, n_spikes=10):
 
     active = 0
     for spikes in spike_train_list:
-        if len(spikes) < n_spikes:
+        if len(spikes) > n_spikes:
             active += 1
 
     return active/n_neurons 
