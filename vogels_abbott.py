@@ -25,7 +25,7 @@ CELL_PARAMS = dict(tau_m=20.0,# ms
                     tau_syn_I=10.0,# ms
                     
                     v_rest=-60.0,# mV
-                    v_reset=-60.0,# mV
+                    v_reset=-61.0,# mV
                     v_thresh=-50.0,# mV
                     
                     cm=0.2,#1.0,# µF/cm²

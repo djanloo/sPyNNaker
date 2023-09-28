@@ -362,7 +362,7 @@ def isi_active_avg_mean(block, t_start=50, t_end = None, n_spikes=10):
     return isi_mean/active
 
 
-def v_regular_quants(block, n_quants=100, fraction=0.5, v_reset=-60.0, dv=0.1):
+def v_regular_quants(block, n_quants=100, fraction=0.5, v_reset=-61.0, dv=0.1):
     """Assume that p(V, t) is independent from t, i.e. the system is in a stationary state"""
     assert fraction > 0 and fraction <=1, "Fraction must be between 0 and 1"
 
@@ -378,7 +378,7 @@ def v_regular_quants(block, n_quants=100, fraction=0.5, v_reset=-60.0, dv=0.1):
 
     return (quants,)
 
-def v_divergent(block, fraction=0.5 ,v_reset=-60.0, dv=0.1):
+def v_divergent(block, fraction=0.5 ,v_reset=-61.0, dv=0.1):
     assert fraction > 0 and fraction <=1, "Fraction must be between 0 and 1"
 
     v = block.segments[0].filter(name="v")[0].magnitude #shape = (time, neuron)
