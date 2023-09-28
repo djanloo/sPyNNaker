@@ -362,5 +362,16 @@ def isi_active_avg_mean(block, t_start=50, t_end = None, n_spikes=10):
     return isi_mean/active
 
 
+def v_quants(block, n_quants=100, fraction=0.5):
+    """Assume that p(V, t) is independent from t, i.e. the system is in a stationary state"""
+    assert fraction > 0 and fraction <=1, "Fraction must be between 0 and 1"
+
+    v = block.segments[0].filter(name="v")[0].magnitude #shape = (time, neuron)
+
+    # Takes only the last fraction
+    v = v[int(fraction*len(v)):, :]
+    quants = np.quantile(v.reshape(-1), np.linspace(0,1, n_quants))
+
+    return (quants,)
 
 
