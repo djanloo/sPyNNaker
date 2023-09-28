@@ -7,7 +7,7 @@ from run_manager import PanHandler, DataGatherer
 from vogels_abbott import build_system
 
 from local_utils import avg_activity, avg_isi_cv, active_fraction, rate_of_active_avg, rate_of_active_std, isi_active_avg_mean, isi_active_avg_tstd
-from local_utils import v_quants
+from local_utils import v_regular_quants, v_divergent
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
@@ -43,13 +43,13 @@ for ts in [ .9,  1]:
     pan_handler.add_lunchbox_dict(lunchbox_pars)
 
 for _ in range(2):
-    for exc_conn_p in np.linspace(0.1, 0.4, 5):
+    for exc_conn_p in np.linspace(0.01, 0.4, 5):
         params = default_system_params.copy()
         params['exc_conn_p'] = exc_conn_p
         pan_handler.add_system_dict(params)
 
 for ext in [avg_activity, active_fraction, rate_of_active_avg, rate_of_active_std,
-            isi_active_avg_tstd , isi_active_avg_mean, avg_isi_cv, v_quants]:
+            isi_active_avg_tstd , isi_active_avg_mean, avg_isi_cv, v_regular_quants, v_divergent]:
 
     pan_handler.add_extraction(ext)
 
