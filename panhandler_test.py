@@ -7,7 +7,7 @@ from run_manager import PanHandler, DataGatherer
 from vogels_abbott import build_system
 
 from local_utils import avg_activity, avg_isi_cv, active_fraction, rate_of_active_avg, rate_of_active_std, isi_active_avg_mean, isi_active_avg_tstd
-from local_utils import v_regular_quants, v_divergent
+from local_utils import v_regular_quants, v_divergent, phase_invariant_average
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
@@ -49,7 +49,7 @@ for _ in range(2):
         pan_handler.add_system_dict(params)
 
 for ext in [avg_activity, active_fraction, rate_of_active_avg, rate_of_active_std,
-            isi_active_avg_tstd , isi_active_avg_mean, avg_isi_cv, v_regular_quants, v_divergent]:
+            isi_active_avg_tstd , isi_active_avg_mean, avg_isi_cv, v_regular_quants, v_divergent, phase_invariant_average]:
 
     pan_handler.add_extraction(ext)
 

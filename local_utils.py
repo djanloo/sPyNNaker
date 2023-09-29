@@ -13,6 +13,7 @@ from quantities import millisecond as ms
 import logging
 from rich.logging import RichHandler
 from sklearn.linear_model import LinearRegression
+from scipy.fft import fft, ifft
 
 _SIM_WAS_CHOSEN = False
 
@@ -392,3 +393,33 @@ def v_divergent(block, fraction=0.5 ,v_reset=-61.0, dv=0.1):
     # Removes divergent part
     v = v.reshape(-1)
     return np.sum((v >= v_reset - dv)&( v <= v_reset + dv)) / n_time_frames / n_neurons
+
+def phase_invariant_average(block, fraction=0.1):
+    def get_timeshift_by_best_match(signal, reference_signal):
+        dists = np.zeros(len(reference_signal))
+        for i in range(1, len(signal)):
+            rounded_signal = signal.copy()
+            # print(signal[-i:].shape)
+            # print(signal[:-i].shape)
+            rounded_signal[:i] = signal[-i:]
+            rounded_signal[i:] = signal[:-i]
+            dists[i] = np.sum((rounded_signal - reference_signal)**2)
+        
+        best_match = np.argmin(dists[1:]) + 1
+        best_match_signal = signal.copy()
+        best_match_signal[:best_match] = signal[-best_match:]
+        best_match_signal[best_match:] = signal[:-best_match]
+
+        return best_match_signal
+    
+    v = block.segments[0].filter(name="v")[0].magnitude.T #shape = (neuron, time)
+    # Gets only last fraction
+    v = v[:, -int(fraction*v.shape[1]):]
+    aligned_v = v.copy()
+
+    for i in range(1,len(aligned_v)):
+        aligned_v[i] = get_timeshift_by_best_match(v[i], v[0])
+
+    strvalues = [f"{v:.2f}" for v in np.mean(aligned_v, axis=0)]
+
+    return ','.join(strvalues)
