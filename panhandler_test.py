@@ -8,10 +8,11 @@ from vogels_abbott import build_system
 
 from local_utils import avg_activity, avg_isi_cv, active_fraction, rate_of_active_avg, rate_of_active_std, isi_active_avg_mean, isi_active_avg_tstd
 from local_utils import v_regular_quants, v_divergent, phase_invariant_average
+from local_utils import synaptic_conductance_stats
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
-logging.getLogger("RUN_MANAGER").setLevel(logging.INFO)
+logging.getLogger("RUN_MANAGER").setLevel(logging.DEBUG)
 logger=logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 
@@ -49,7 +50,8 @@ for _ in range(2):
         pan_handler.add_system_dict(params)
 
 for ext in [avg_activity, active_fraction, rate_of_active_avg, rate_of_active_std,
-            isi_active_avg_tstd , isi_active_avg_mean, avg_isi_cv, v_regular_quants, v_divergent, phase_invariant_average]:
+            isi_active_avg_tstd , isi_active_avg_mean, avg_isi_cv, v_regular_quants, v_divergent, phase_invariant_average,
+            synaptic_conductance_stats]:
 
     pan_handler.add_extraction(ext)
 

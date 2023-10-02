@@ -529,18 +529,34 @@ class DataGatherer:
             for sys_id in extr_dict.keys():
                 for func in extr_dict[sys_id].keys():
                     for pop in extr_dict[sys_id][func].keys():
-                        row = dict()
-                        row['sys_id'] = sys_id
-                        row['func'] = func
-                        row['pop'] = pop
-                        row['extraction'] =  extr_dict[sys_id][func][pop]
+                        # Check for multiple results
+                        if isinstance(extr_dict[sys_id][func][pop], dict):
+                            for inside_func in extr_dict[sys_id][func][pop].keys():
+                                row = dict()
+                                row['sys_id'] = sys_id
+                                row['func'] = inside_func
+                                row['pop'] = pop
+                                row['extraction'] =  extr_dict[sys_id][func][pop][inside_func]
 
 
-                        row.update(lunchbox_params)
-                        row.update(sys_params[sys_id])
+                                row.update(lunchbox_params)
+                                row.update(sys_params[sys_id])
 
-                        row = pd.DataFrame(row, index=[0])
-                        self.database = pd.concat([self.database, row], ignore_index=True)
+                                row = pd.DataFrame(row, index=[0])
+                                self.database = pd.concat([self.database, row], ignore_index=True)
+                        else:
+                            row = dict()
+                            row['sys_id'] = sys_id
+                            row['func'] = func
+                            row['pop'] = pop
+                            row['extraction'] =  extr_dict[sys_id][func][pop]
+
+
+                            row.update(lunchbox_params)
+                            row.update(sys_params[sys_id])
+
+                            row = pd.DataFrame(row, index=[0])
+                            self.database = pd.concat([self.database, row], ignore_index=True)
 
         logger.info(f"Built database: \n{self.database}")
         self.database.to_csv("A.csv")

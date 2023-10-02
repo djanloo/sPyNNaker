@@ -371,7 +371,7 @@ def v_regular_quants(block, n_quants=100, fraction=0.5, v_reset=-61.0, dv=0.1):
     v = block.segments[0].filter(name="v")[0].magnitude #shape = (time, neuron)
 
     # Takes only the last fraction
-    v = v[int(fraction*len(v)):, :]
+    v = v[-int(fraction*len(v)):, :]
 
     # Removes divergent part
     v = v.reshape(-1)
@@ -387,7 +387,7 @@ def v_divergent(block, fraction=0.5 ,v_reset=-61.0, dv=0.1):
     n_neurons = block.annotations['size']
 
     # Takes only the last fraction
-    v = v[int(fraction*len(v)):, :]
+    v = v[-int(fraction*len(v)):, :]
     
     n_time_frames = v.shape[0]
 
@@ -428,3 +428,28 @@ def phase_invariant_average(block, fraction=0.1):
     strvalues = [f"{v:.2f}" for v in np.mean(aligned_v, axis=0)]
 
     return ','.join(strvalues)
+
+
+def synaptic_conductance_stats(block, fraction = 0.1):
+
+    # Extract time delta of integration and timestep
+    time = (block.segments[0].spiketrains.t_stop - block.segments[0].spiketrains.t_start).magnitude # ms
+    n_time_points = block.segments[0].filter(name="v")[0].magnitude.shape[0]
+
+    Delta_t = fraction*time
+    dt = Delta_t/(fraction*n_time_points)
+
+    stats = dict()
+    for quantity in ["gsyn_exc", "gsyn_inh"]:
+
+        q_t = block.segments[0].filter(name=quantity)[0].magnitude #shape = (time, neuron)
+        q_t = q_t[int(fraction*n_time_points):, :]
+
+        # Ensemble average
+        q_t_avg = np.mean(q_t, axis=1)
+
+        # Time average
+        q_avg_mean = np.trapz(q_t_avg, dx=dt)/Delta_t
+        stats[f"{quantity}_avg_mean"] = q_avg_mean
+
+    return stats
