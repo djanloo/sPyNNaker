@@ -398,17 +398,17 @@ def v_divergent(block, fraction=0.5 ,v_reset=-61.0, dv=0.1):
 def phase_invariant_average(block, fraction=0.1):
     def align_by_best_match(signal, reference_signal, tol=0.2):
         scaler = StandardScaler()
-        signal = scaler.fit_transform(signal.reshape(-1,1)).reshape(-1)
-        reference_signal = scaler.fit_transform(reference_signal.reshape(-1,1)).reshape(-1)
-        dists = np.zeros(len(reference_signal))
-        for i in range(1, len(signal)):
-            rounded_signal = signal.copy()
+        signal_rescaled = scaler.fit_transform(signal.reshape(-1,1)).reshape(-1)
+        reference_signal_rescaled = scaler.fit_transform(reference_signal.reshape(-1,1)).reshape(-1)
+        dists = np.zeros(len(reference_signal_rescaled))
+        for i in range(1, len(signal_rescaled)):
+            rounded_signal = signal_rescaled.copy()
             # print(signal[-i:].shape)
             # print(signal[:-i].shape)
-            rounded_signal[:i] = signal[-i:]
-            rounded_signal[i:] = signal[:-i]
-            dists[i] = np.sum((rounded_signal - reference_signal)**2)
-            if i > 1 and dists[i] < dists[i-1] and dists[i] < tol*len(signal):
+            rounded_signal[:i] = signal_rescaled[-i:]
+            rounded_signal[i:] = signal_rescaled[:-i]
+            dists[i] = np.sum((rounded_signal - reference_signal_rescaled)**2)
+            if i > 1 and dists[i] < dists[i-1] and dists[i] < tol*len(signal_rescaled):
                 break
         
         best_match = np.argmin(dists[1:]) + 1
