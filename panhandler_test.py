@@ -6,8 +6,8 @@ from matplotlib import pyplot as plt
 from run_manager import PanHandler, DataGatherer
 from vogels_abbott import build_system
 
-from local_utils import avg_activity, avg_isi_cv, active_fraction, rate_of_active_avg, rate_of_active_std, isi_active_avg_mean, isi_active_avg_tstd
-from local_utils import v_regular_quants, v_divergent, phase_invariant_average
+from local_utils import activity_stats, isi_stats, v_stats
+from local_utils import  phase_invariant_average
 from local_utils import synaptic_conductance_stats
 
 import logging
@@ -49,9 +49,11 @@ for _ in range(2):
         params['exc_conn_p'] = exc_conn_p
         pan_handler.add_system_dict(params)
 
-for ext in [avg_activity, active_fraction, rate_of_active_avg, rate_of_active_std,
-            isi_active_avg_tstd , isi_active_avg_mean, avg_isi_cv, v_regular_quants, v_divergent, phase_invariant_average,
-            synaptic_conductance_stats]:
+for ext in [activity_stats,
+            isi_stats,
+            synaptic_conductance_stats,
+            v_stats, 
+            phase_invariant_average]:
 
     pan_handler.add_extraction(ext)
 
