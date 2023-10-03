@@ -12,7 +12,7 @@ from local_utils import synaptic_conductance_stats
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
-logging.getLogger("RUN_MANAGER").setLevel(logging.DEBUG)
+logging.getLogger("RUN_MANAGER").setLevel(logging.INFO)
 logger=logging.getLogger("APPLICATION")
 logger.setLevel(logging.DEBUG)
 

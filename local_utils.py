@@ -117,11 +117,13 @@ def activity_stats(block, n_spikes=10, t_start=50, t_end=None):
 
         if len(spiketimes) > n_spikes:
             active_firing_rates += [len(spiketimes)/(t_end - t_start)*1e3]
-    
-    stats = dict(avg_activity=np.mean(all_firing_rates),
-                 active_fraction=len(active_firing_rates)/n_neurons, 
-                 rate_of_active_avg=np.mean(active_firing_rates), 
-                 rate_of_active_std=np.std(active_firing_rates))
+
+    # Return results
+    stats = dict( active_fraction=len(active_firing_rates)/n_neurons)
+    stats['avg_activity'] = np.mean(all_firing_rates) if len(all_firing_rates) > 0 else np.nan
+    stats['rate_of_active_avg']=np.mean(active_firing_rates) if len(active_firing_rates) > 0 else np.nan
+    stats['rate_of_active_std']=np.std(active_firing_rates) if len(active_firing_rates) > 0 else np.nan
+
     return stats
     
 
@@ -144,7 +146,12 @@ def isi_stats(block, t_start=50, t_end = None, n_spikes=10):
             isi_variance += np.std(np.diff(spiketimes))
             isi_cv += isi_variance/isi_mean
 
-    stats = dict(isi_mean_avg=isi_mean/active, isi_tstd_avg=isi_variance/active, isi_cv_avg=isi_cv/active)
+    # Return results
+    stats = dict()
+    stats['isi_mean_avg'] = isi_mean/active if active > 0 else np.nan
+    stats['isi_tstd_avg'] = isi_variance/active if active > 0 else np.nan
+    stats['isi_cv_avg'] = isi_cv/active if active > 0 else np.nan
+    
     return stats
 
 
