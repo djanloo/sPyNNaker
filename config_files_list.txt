@@ -1,1 +1,0 @@
-/lib/python3.10/site-packages/spinn_utilities/spinn_utilities.cfg /lib/python3.10/site-packages/spinn_machine/spinn_machine.cfg /lib/python3.10/site-packages/pacman/pacman.cfg /lib/python3.10/site-packages/spinnman/spinnman.cfg /lib/python3.10/site-packages/spinn_front_end_common/interface/spinnaker.cfg /lib/python3.10/site-packages/spynnaker/pyNN/spynnaker.cfg /.spynnaker.cfg
