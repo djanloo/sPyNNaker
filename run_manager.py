@@ -265,20 +265,10 @@ class LunchBox:
 
         logger.info(f"Running lunchbox composed of {len(self.systems)} systems ({total_neurons} total neurons) for {self.duration} timesteps")
         logger.info(f"Extractions functions are: {[f.__name__ for f in self._extraction_functions]}")
-
-        # Here I try 10 times to run the script
-        # The exception I except is the one that is raised
-        # when cores are not free
-        run_attempts = 0
-        while run_attempts < MAX_RUN_ATTEMPTS:
-            try:
-                start = time.perf_counter()
-                self.sim.run(self.duration)
-                self._run_time = time.perf_counter() - start
-            except SpiNNManCoresNotInStateException:
-                logger.error(f"Not enough free cores. Trying again in {WAIT_TIME_S} seconds ({run_attempts}/{MAX_RUN_ATTEMPTS}).")
-                run_attempts += 1 
-                sleep(WAIT_TIME_S)
+        
+        start = time.perf_counter()
+        self.sim.run(self.duration)
+        self._run_time = time.perf_counter() - start
 
         self.box_params['run_time'] = self._run_time
         logger.info(f"Simulation took {self._run_time:.1f} seconds")
@@ -462,16 +452,23 @@ class PanHandler:
         set_logger_pid(logger)
 
         lunchbox_dict['folder'] = os.path.join(folder, str(os.getpid()))
+        executed = False
+        while not executed and run_attempts < MAX_RUN_ATTEMPTS:
+            try:
+                lb = LunchBox(**lunchbox_dict)
+                for sys_dict in system_dicts:
+                    lb.add_system(System(build_func, sys_dict))
+                
+                for extr in extractions:
+                    lb.add_extraction(extr)
 
-        lb = LunchBox(**lunchbox_dict)
-        for sys_dict in system_dicts:
-            lb.add_system(System(build_func, sys_dict))
-        
-        for extr in extractions:
-            lb.add_extraction(extr)
-
-        lb.run()
-        lb.extract_and_save()
+                lb.run()
+                lb.extract_and_save()
+                executed = True
+            except SpiNNManCoresNotInStateException:
+                logger.error(f"Not enough free cores. Trying again in {WAIT_TIME_S} seconds ({run_attempts}/{MAX_RUN_ATTEMPTS}).")
+                run_attempts += 1 
+                sleep(WAIT_TIME_S)
 
     def _extract(self):
         self.extractions = dict()
