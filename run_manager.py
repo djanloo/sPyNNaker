@@ -21,10 +21,12 @@ import dill as pickle
 import time
 import multiprocessing as mp
 from time import perf_counter, sleep
+import importlib
 
 
 import numpy as np
 import pandas as pd
+import pyNN.spiNNaker
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinnman.exceptions import SpiNNManCoresNotInStateException
 
@@ -455,7 +457,10 @@ class PanHandler:
         run_attempts = 0
         while run_attempts < MAX_RUN_ATTEMPTS:
             try:
-                sim = get_sim() # Try reimport spinnaker again
+                # Try a reload of spynnaker
+                # because spalloc has timeouts
+                importlib.reload(pyNN.spiNNaker)
+
                 lb = LunchBox(**lunchbox_dict)
 
                 for sys_dict in system_dicts:
@@ -468,8 +473,6 @@ class PanHandler:
                 lb.extract_and_save()
 
             except SpiNNManCoresNotInStateException:
-                sim = get_sim()
-                sim.end()
                 logger.error(f"Not enough free cores. Trying again in {WAIT_TIME_S} seconds ({run_attempts}/{MAX_RUN_ATTEMPTS}).")
                 run_attempts += 1 
                 sleep(WAIT_TIME_S)
