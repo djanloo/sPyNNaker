@@ -20,13 +20,14 @@ import os
 import dill as pickle
 import time
 import multiprocessing as mp
-from time import perf_counter
+from time import perf_counter, sleep
 
 
 import numpy as np
 import pandas as pd
 from pyNN.random import RandomDistribution
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
+from spinnman.exceptions import SpiNNManCoresNotInStateException
 
 from local_utils import get_sim, num, set_logger_pid
 
@@ -34,6 +35,8 @@ import logging
 from local_utils import set_loggers;
 set_loggers()
 
+MAX_RUN_ATTEMPTS = 10
+WAIT_TIME_S = 350 # seconds
 LUNCHBOX_PARAMS = ['duration', 'timestep', 'time_scale_factor', 'min_delay', 'neurons_per_core']
 
 logger = logging.getLogger("RUN_MANAGER")
@@ -262,11 +265,21 @@ class LunchBox:
 
         logger.info(f"Running lunchbox composed of {len(self.systems)} systems ({total_neurons} total neurons) for {self.duration} timesteps")
         logger.info(f"Extractions functions are: {[f.__name__ for f in self._extraction_functions]}")
-        start = time.perf_counter()
-        self.sim.run(self.duration)
-        self._run_time = time.perf_counter() - start
-        self.box_params['run_time'] = self._run_time
 
+        # Here I try 10 times to run the script
+        # The exception I except is the one that is raised
+        # when cores are not free
+        run_attempts = 0
+        while run_attempts < MAX_RUN_ATTEMPTS:
+            try:
+                start = time.perf_counter()
+                self.sim.run(self.duration)
+                self._run_time = time.perf_counter() - start
+            except SpiNNManCoresNotInStateException:
+                logger.error(f"Not enough free cores. Trying again in {WAIT_TIME_S} seconds ({run_attempts}/{MAX_RUN_ATTEMPTS}).")
+                sleep(WAIT_TIME_S)
+                
+        self.box_params['run_time'] = self._run_time
         logger.info(f"Simulation took {self._run_time:.1f} seconds")
 
     def extract_and_save(self, save_pops=False, save_extraction_functions=False):
@@ -501,11 +514,24 @@ class DataGatherer:
         self.subfolders = [subf for subf in os.listdir(self.folder) if os.path.isdir(os.path.join(self.folder, subf ))]
         logger.info(f"Gatherer has found subfolders:\n {self.subfolders}")
 
+        self.valid_subfolders = []
+        for sub in self.subfolders:
+            valid = True
+            sub_path = os.path.join(self.folder, sub)
+            for file in ["lunchbox_conf.pkl","systems_conf.pkl", "extractions.pkl"]:
+                if not os.path.exists(os.path.join(sub_path, file)):
+                    valid = False
+            if valid:
+                self.valid_subfolders.append(sub)
+        
+        if len(set(self.subfolders) - set(self.valid_subfolders)) > 0:
+            logger.warning(f"Found {len(set(self.subfolders) - set(self.valid_subfolders))} not valid subfolders. Skipping.")
+
         self.database = pd.DataFrame()
 
     def gather(self):
 
-        for sub in self.subfolders:
+        for sub in self.valid_subfolders:
 
             sub_path = os.path.join(self.folder, sub)
 
@@ -518,7 +544,6 @@ class DataGatherer:
             ## Infos about systems
             with open(os.path.join(sub_path, "systems_conf.pkl"), "rb") as sysfile:
                 sys_params = pickle.load(sysfile)
-
 
             ## Infos about extractions
             with open(os.path.join(sub_path, "extractions.pkl"), "rb") as extr:
