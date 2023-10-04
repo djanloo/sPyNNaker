@@ -23,6 +23,7 @@ def set_loggers(lvl=logging.DEBUG):
     rich_handler.setFormatter(logging.Formatter(fmt=f'[PID {os.getpid()}] %(message)s'))
 
     file_handler = logging.FileHandler(f"LOGS/logs_{os.getpid()}.txt")
+    file_handler.setFormatter(logging.Formatter(fmt=f'[PID {os.getpid()}] %(message)s'))
     file_handler.setLevel(logging.DEBUG)
 
     logging.basicConfig(format='%(message)s', 
