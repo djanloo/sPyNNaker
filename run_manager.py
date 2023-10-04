@@ -452,7 +452,10 @@ class PanHandler:
         set_logger_pid(logger)
 
         lunchbox_dict['folder'] = os.path.join(folder, str(os.getpid()))
+
         executed = False
+        run_attempts = 0
+        
         while not executed and run_attempts < MAX_RUN_ATTEMPTS:
             try:
                 lb = LunchBox(**lunchbox_dict)
