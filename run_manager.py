@@ -277,8 +277,9 @@ class LunchBox:
                 self._run_time = time.perf_counter() - start
             except SpiNNManCoresNotInStateException:
                 logger.error(f"Not enough free cores. Trying again in {WAIT_TIME_S} seconds ({run_attempts}/{MAX_RUN_ATTEMPTS}).")
+                run_attempts += 1 
                 sleep(WAIT_TIME_S)
-                
+
         self.box_params['run_time'] = self._run_time
         logger.info(f"Simulation took {self._run_time:.1f} seconds")
 
