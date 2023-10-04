@@ -53,7 +53,8 @@ for ext in [activity_stats,
             isi_stats,
             synaptic_conductance_stats,
             v_stats, 
-            phase_invariant_average]:
+            # phase_invariant_average
+            ]:
 
     pan_handler.add_extraction(ext)
 

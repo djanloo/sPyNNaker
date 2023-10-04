@@ -6,15 +6,13 @@ minor computations
 """
 
 import os
-import matplotlib.pyplot as plt
 import numpy as np
 from quantities import millisecond as ms
 
 import logging
 from rich.logging import RichHandler
-from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
-from scipy.fft import fft, ifft
+from scipy.signal import decimate
 
 _SIM_WAS_CHOSEN = False
 
@@ -87,9 +85,7 @@ def spiketrains_to_couples(spike_train_list):
         spike_array.append(np.column_stack((neuron_indices, spike_times)))
 
     spike_array = np.vstack(spike_array)
-    # logger.debug(f"Spike arrays have shape {spike_array.shape}")
-    # logger.debug(f"Spike arrays are \n{spike_array}")
-    # logger.debug(f"Spike arrays.T are \n{spike_array.T}")
+
     return spike_array
 
 def num(s):
@@ -105,8 +101,6 @@ def activity_stats(block, n_spikes=10, t_start=50, t_end=None):
 
     if t_end is None:
         t_end = spike_train_list.t_stop.magnitude
-
-
 
     active_firing_rates = []
     all_firing_rates = []
@@ -206,27 +200,42 @@ def phase_invariant_average(block, fraction=0.1):
         signal_rescaled = scaler.fit_transform(signal.reshape(-1,1)).reshape(-1)
         reference_signal_rescaled = scaler.fit_transform(reference_signal.reshape(-1,1)).reshape(-1)
         dists = np.zeros(len(reference_signal_rescaled))
-        for i in range(1, len(signal_rescaled)):
-            rounded_signal = signal_rescaled.copy()
-            # print(signal[-i:].shape)
-            # print(signal[:-i].shape)
-            rounded_signal[:i] = signal_rescaled[-i:]
-            rounded_signal[i:] = signal_rescaled[:-i]
-            dists[i] = np.sum((rounded_signal - reference_signal_rescaled)**2)
-            if i > 1 and dists[i] < dists[i-1] and dists[i] < tol*len(signal_rescaled):
+
+        # Decimates the signal to speed up the computation
+        # Assuming a maximum spiking frequency of 200 Hz
+        # I take roughly 5 points per period
+        # So i decimate the signal until is 128 points long
+
+        signal_downsampled = signal_rescaled.copy()
+        reference_signal_downsampled = reference_signal_rescaled.copy()
+        time_scaling = 1
+
+        while len(signal_downsampled) > 128:
+            signal_downsampled = decimate(signal_downsampled, 2)
+            reference_signal_downsampled = decimate(reference_signal_downsampled, 2)
+            time_scaling  *= 2 
+
+        for i in range(1, len(signal_downsampled)):
+            rounded_signal = signal_downsampled.copy()
+            rounded_signal[:i] = signal_downsampled[-i:]
+            rounded_signal[i:] = signal_downsampled[:-i]
+            dists[i] = np.sum((rounded_signal - reference_signal_downsampled)**2)
+            if i > 1 and dists[i] < dists[i-1] and dists[i] < tol*len(signal_downsampled):
                 break
         
         best_match = np.argmin(dists[1:]) + 1
         best_match_signal = signal.copy()
-        best_match_signal[:best_match] = signal[-best_match:]
-        best_match_signal[best_match:] = signal[:-best_match]
+        best_match_signal[:best_match] = signal[-time_scaling*best_match:]
+        best_match_signal[best_match:] = signal[:-time_scaling*best_match]
 
         return best_match_signal
+    
     v = block.segments[0].filter(name="v")[0].magnitude.T #shape = (neuron, time)
+
     # Gets only last fraction
     v = v[:, -int(fraction*v.shape[1]):]
-    aligned_v = v.copy()
 
+    aligned_v = np.zeros(v.shape)
     for i in range(1,len(aligned_v)):
         aligned_v[i] = align_by_best_match(v[i], v[0])
 
