@@ -25,7 +25,6 @@ from time import perf_counter, sleep
 
 import numpy as np
 import pandas as pd
-from pyNN.random import RandomDistribution
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinnman.exceptions import SpiNNManCoresNotInStateException
 
@@ -456,7 +455,7 @@ class PanHandler:
         run_attempts = 0
         while run_attempts < MAX_RUN_ATTEMPTS:
             try:
-
+                sim = get_sim() # Try reimport spinnaker again
                 lb = LunchBox(**lunchbox_dict)
 
                 for sys_dict in system_dicts:
