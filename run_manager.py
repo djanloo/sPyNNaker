@@ -273,6 +273,7 @@ class LunchBox:
 
         self.box_params['run_time'] = self._run_time
         logger.info(f"Simulation took {self._run_time:.1f} seconds")
+        sim.end()
 
     def extract_and_save(self, save_pops=False, save_extraction_functions=False):
 
