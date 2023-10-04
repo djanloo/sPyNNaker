@@ -240,6 +240,7 @@ if [ "$BUILD_EDITED" = true ] ; then
     # Rename to prevent from name mismatch
     mv sPyNNaker/spynnaker-custom sPyNNaker/spynnaker
 else
+    rm -rf sPyNNaker
     gitclone sPyNNaker
     pwarn Default sPyNNaker package will be used in the installation
 fi
