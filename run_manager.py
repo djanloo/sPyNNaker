@@ -455,10 +455,12 @@ class PanHandler:
 
         executed = False
         run_attempts = 0
-        
+
         while not executed and run_attempts < MAX_RUN_ATTEMPTS:
             try:
+                
                 lb = LunchBox(**lunchbox_dict)
+
                 for sys_dict in system_dicts:
                     lb.add_system(System(build_func, sys_dict))
                 
@@ -467,11 +469,13 @@ class PanHandler:
 
                 lb.run()
                 lb.extract_and_save()
-                executed = True
+
             except SpiNNManCoresNotInStateException:
                 logger.error(f"Not enough free cores. Trying again in {WAIT_TIME_S} seconds ({run_attempts}/{MAX_RUN_ATTEMPTS}).")
                 run_attempts += 1 
                 sleep(WAIT_TIME_S)
+            else:
+                executed = True
 
     def _extract(self):
         self.extractions = dict()
