@@ -62,18 +62,5 @@ pan_handler.run()
 
 dg = DataGatherer(pan_handler.folder)
 db = dg.gather()
-logger.info(f"Database cols: {db.columns}")
-
-plt.plot(db[(db["pop"] == 'exc')&(db.func == 'avg_isi_cv')].timestep, 
-         db[(db['pop'] == 'exc')&(db.func == 'avg_isi_cv')].extraction, 
-         ls="", marker=".", label="ISI CV")
-
-plt.plot(db[(db["pop"] == 'exc')&(db.func == 'avg_activity')].timestep, 
-         db[(db['pop'] == 'exc')&(db.func == 'avg_activity')].extraction, 
-         ls="", marker=".", label="ISI CV")
-
-plt.legend()
-plt.savefig("test_panhandler.png")
-
 
 

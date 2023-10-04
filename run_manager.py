@@ -473,6 +473,7 @@ class PanHandler:
                 lb.extract_and_save()
 
             except SpiNNManCoresNotInStateException:
+                get_sim().end() # Safety stop of simulator
                 logger.error(f"Not enough free cores. Trying again in {WAIT_TIME_S} seconds ({run_attempts}/{MAX_RUN_ATTEMPTS}).")
                 run_attempts += 1 
                 sleep(WAIT_TIME_S)

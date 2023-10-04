@@ -22,8 +22,12 @@ def set_loggers(lvl=logging.DEBUG):
     rich_handler = RichHandler()
     rich_handler.setFormatter(logging.Formatter(fmt=f'[PID {os.getpid()}] %(message)s'))
 
+    file_handler = logging.FileHandler(f"LOGS/logs_{os.getpid()}.txt")
+    file_handler.setLevel(logging.DEBUG)
+
     logging.basicConfig(format='%(message)s', 
-                        handlers=[rich_handler])
+                        handlers=[rich_handler, file_handler],
+                        )
 
     # For each logger of the submodules sets the verbosity
     for logger_name in ["ANALYSIS", "PLOTTING", "UTILS", "APPLICATION", "RUN_MANAGER",  "NETWORK_BUILDING"]:
