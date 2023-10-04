@@ -453,12 +453,10 @@ class PanHandler:
 
         lunchbox_dict['folder'] = os.path.join(folder, str(os.getpid()))
 
-        executed = False
         run_attempts = 0
-
-        while not executed and run_attempts < MAX_RUN_ATTEMPTS:
+        while run_attempts < MAX_RUN_ATTEMPTS:
             try:
-                
+
                 lb = LunchBox(**lunchbox_dict)
 
                 for sys_dict in system_dicts:
@@ -475,7 +473,7 @@ class PanHandler:
                 run_attempts += 1 
                 sleep(WAIT_TIME_S)
             else:
-                executed = True
+                break
 
     def _extract(self):
         self.extractions = dict()
