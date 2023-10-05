@@ -38,7 +38,8 @@ def set_loggers(lvl=logging.DEBUG):
 
 def set_logger_pid(logger):
     logger = logging.getLogger()
-    logger.handlers[0].setFormatter(logging.Formatter(fmt=f'[PID {os.getpid()}] %(message)s'))
+    for handler in logger.handlers:
+        handler.setFormatter(logging.Formatter(fmt=f'[PID {os.getpid()}] %(message)s'))
 
 
 set_loggers()
