@@ -190,24 +190,25 @@ export C_LOGS_DICT=$(pwd)/LOGS/logs.sqlite3
 touch $C_LOGS_DICT
 chmod 777 $C_LOGS_DICT
 
-export MAKE_LOG_FOLDER=${PWD}/LOGS
+export MAKE_LOG_FOLDER=${PWD}/MAKE_LOGS
+mkdir $MAKE_LOG_FOLDER
 
-pecho Retrieving configuration files
-mkdir ../config_files
-cd $VIRTUAL_ENV
-cp "$(<$INITDIR/config_files_list.txt)" $INITDIR/../config_files
-cd -
+# pecho Retrieving configuration files
+# mkdir ../config_files
+# cd $VIRTUAL_ENV
+# cp "$(<$INITDIR/config_files_list.txt)" $INITDIR/../config_files
+# cd -
 
 cd ..
 pecho Remote spynnaker version: $(python -c "import spynnaker; print(spynnaker.__version__)")
 cd -
 
-pecho Result of pip freeze:
-pip freeze
-pip freeze > pipfreeze.txt
+# pecho Result of pip freeze:
+# pip freeze
+# pip freeze > pipfreeze.txt
 
-pecho Exporting environment variables to ${INITDIR}/env_var.txt
-printenv > ${INITDIR}/env_var.txt
+# pecho Exporting environment variables to ${INITDIR}/env_var.txt
+# printenv > ${INITDIR}/env_var.txt
 
 cd $INITDIR
 pecho Installing requirements:
@@ -288,7 +289,7 @@ ls -al
 echo
 echoline INSTALL NON-COMPILED STUFF
 
-# dosetupinstall SpiNNutils
+dosetupinstall SpiNNutils
 dosetupinstall SpiNNUtils
 
 wait
@@ -301,8 +302,8 @@ echo
 # Build the C Code
 echoline COMPILATION
 
-export SPINN_DIRS=$(pwd)/spinnaker_tools
-export NEURAL_MODELLING_DIRS=$(pwd)/sPyNNaker/neural_modelling
+export SPINN_DIRS=$AUX_INSTALL_FOLDER/spinnaker_tools
+export NEURAL_MODELLING_DIRS=$AUX_INSTALL_FOLDER/sPyNNaker/neural_modelling
 
 pecho SPINN_DIRS was set to $SPINN_DIRS
 pecho NEURAL_MODELLING_DIRS was set to $NEURAL_MODELLING_DIRS
