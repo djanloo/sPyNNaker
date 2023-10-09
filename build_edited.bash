@@ -55,7 +55,7 @@ domake() {
     fi
 }
 
-#####################################################################
+##################### Some preliminaries #####################
 echoline Started installation script by djanloo
 
 export INITDIR=$(pwd)
@@ -69,7 +69,8 @@ export C_LOGS_DICT=$(pwd)/LOGS/logs.sqlite3
 touch $C_LOGS_DICT
 chmod 777 $C_LOGS_DICT
 
-export MAKE_LOG_FOLDER=${PWD}/LOGS
+export MAKE_LOG_FOLDER=${PWD}/MAKE_LOGS
+mkdir $MAKE_LOG_FOLDER
 
 
 # Move where the repos are
@@ -92,11 +93,12 @@ mv sPyNNaker/spynnaker-custom sPyNNaker/spynnaker
 # Build the C Code
 echoline COMPILATION
 
-export SPINN_DIRS=$(pwd)/spinnaker_tools
-export NEURAL_MODELLING_DIRS=$(pwd)/sPyNNaker/neural_modelling
+export SPINN_DIRS=$AUX_INSTALL_FOLDER/spinnaker_tools
+export NEURAL_MODELLING_DIRS=$AUX_INSTALL_FOLDER/sPyNNaker/neural_modelling
 
 pecho SPINN_DIRS was set to $SPINN_DIRS
 pecho NEURAL_MODELLING_DIRS was set to $NEURAL_MODELLING_DIRS
+
 
 domake sPyNNaker/neural_modelling/ clean
 domake sPyNNaker/neural_modelling/
