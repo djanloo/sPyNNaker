@@ -595,3 +595,33 @@ class DataGatherer:
         logger.info(f"Built database: \n{self.database}")
         self.database.to_csv("A.csv")
         return self.database
+    
+    def adjust_db(self):
+        raise NotImplementedError("TODO")
+        self.adjusted_df = pd.DataFrame()
+        self.database['id'] = self.database.sys_id.apply(str) + "_" + self.database['pop']
+        self.database = self.database.set_index("id")
+
+        df['id'] = np.unique(self.database.index.values)
+        df['pop_type'] = df['id'].apply( lambda x: x[-3:])
+
+        df = df.set_index('id')
+
+        funcs = np.unique(self.database.func)
+
+        time_series_funcs = []
+        for func in funcs:
+            df[func] = self.database[ self.database.func == func].extraction
+            try:
+                df[func] = df[func].astype(float)
+            except Exception as e:
+                time_series_funcs.append(func)
+
+        for column in ['timestep', 'exc_conn_p']:
+            df[column] = self.database[self.database.func == funcs[0]][column]
+            
+            
+        df['is_asleep'] = (df.avg_activity < 2.0).astype(int)
+
+        df.rate_of_active_avg = df.rate_of_active_avg.fillna(0)
+        df.rate_of_active_std = df.rate_of_active_std.fillna(0)

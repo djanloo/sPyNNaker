@@ -159,6 +159,7 @@ def v_stats(block, n_bins=50, fraction=0.5, v_reset=-61, dv=0.1):
 
     v = block.segments[0].filter(name="v")[0].magnitude #shape = (time, neuron)
     n_neurons = block.annotations['size']
+    bins = np.linspace(-70, -30, n_bins + 1)
 
     # Takes only the last fraction
     v = v[-int(fraction*len(v)):, :]
@@ -170,7 +171,7 @@ def v_stats(block, n_bins=50, fraction=0.5, v_reset=-61, dv=0.1):
     v_regular = v[~((v > v_reset - dv)&(v < v_reset + dv))]
     is_v_divergent = ((v > v_reset - dv)&(v < v_reset + dv))
 
-    bins_string = ','.join([str(val) for val in np.histogram(v_regular, n_bins, density=True)[0]])
+    bins_string = ','.join([str(val) for val in np.histogram(v_regular, bins=bins, density=True)[0]])
 
     stats = dict(v_regular_binned=bins_string, 
                  v_divergent=np.sum(is_v_divergent)/n_time_frames/n_neurons)
@@ -249,3 +250,37 @@ def phase_invariant_average(block, fraction=0.1):
 
     return ','.join(strvalues)
 
+def spectral_stats(block, bin_size_ms = 1 , t_start=50, t_end = None):
+    spike_train_list = block.segments[0].spiketrains
+    n_neurons = block.annotations['size']
+
+    if t_end is None:
+        t_end = spike_train_list.t_stop.magnitude
+
+    # Get dt
+    time = (block.segments[0].spiketrains.t_stop - block.segments[0].spiketrains.t_start).magnitude # ms
+    n_time_points = block.segments[0].filter(name="v")[0].magnitude.shape[0]
+    dt = time/n_time_points
+
+    # Get bins
+    n_bins = int(time/bin_size_ms)
+    a_t = np.zeros(n_bins)
+
+    for spikes in spike_train_list:
+        spiketimes = spikes.magnitude[spikes.magnitude > t_start]
+        for st in spiketimes:
+            a_t[int(st/bin_size_ms)] += 1/n_neurons
+
+    results = dict()
+
+    # Spectral power mode
+    freqs = np.fft.fftfreq(n_bins, dt)
+    fft = np.fft.fft(a_t)
+    results["spectral_mode"] = freqs[np.argmax(np.abs(fft))]
+    
+    # Spectral entropy
+    density = np.abs(fft[:n_bins//2])**2
+    density /= np.sum(density)
+    results["spectral_entropy"] = -np.sum(density*np.log(density))
+
+    return results

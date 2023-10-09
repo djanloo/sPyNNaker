@@ -6,9 +6,9 @@ from matplotlib import pyplot as plt
 from run_manager import PanHandler, DataGatherer
 from vogels_abbott import build_system
 
-from local_utils import activity_stats, isi_stats, v_stats
+from local_utils import activity_stats, isi_stats, v_stats, synaptic_conductance_stats
 from local_utils import  phase_invariant_average
-from local_utils import synaptic_conductance_stats
+from local_utils import spectral_stats
 
 import logging
 from local_utils import set_loggers; set_loggers(lvl=logging.WARNING)
@@ -53,7 +53,7 @@ for ext in [activity_stats,
             isi_stats,
             synaptic_conductance_stats,
             v_stats, 
-            # phase_invariant_average
+            spectral_stats
             ]:
 
     pan_handler.add_extraction(ext)
