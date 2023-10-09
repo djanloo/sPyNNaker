@@ -271,6 +271,9 @@ def spectral_stats(block, bin_size_ms = 1 , t_start=50, t_end = None):
         for st in spiketimes:
             a_t[int(st/bin_size_ms)] += 1/n_neurons
 
+    # Removes the average of a(t)
+    a_t -= np.mean(a_t)
+
     results = dict()
 
     # Spectral power mode
