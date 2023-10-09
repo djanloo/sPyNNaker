@@ -22,6 +22,7 @@ import time
 import multiprocessing as mp
 from time import perf_counter, sleep
 import importlib
+import json
 
 
 import numpy as np
@@ -61,7 +62,7 @@ class System:
             self.pops = dict()
         self._id = None
         self._was_converted = False
-        logger.info(f"Successfully created {self} with params\n{self.params_dict}")
+        logger.debug(f"Successfully created {self} with params\n{self.params_dict}")
 
     @property
     def id(self):
@@ -327,25 +328,25 @@ class LunchBox:
             logger.info(f"saving LunchBox extractions functions in {self.folder}/extractions_functions.pkl")
             pickle.dump(self._extraction_functions, extrf_file)
 
-    def get_systems_in_region(self, extrema_dict):
-        systems_in_region = []
-        for sys_id in self.systems.keys():
-            is_in_region = True
-            params =self.systems[sys_id].params_dict
-            for par in extrema_dict.keys():
-                try:
-                    if params[par] < extrema_dict[par][0] or params[par] > extrema_dict[par][1]:
-                        is_in_region = False
-                        logger.debug(f"system excluded from region since {par}={params[par]} is not in {extrema_dict[par]}")
-                except KeyError as e:
-                    logger.warning(f"Parameter {par} was not found in {self.systems[sys_id]}\nRaised: {e}")
-                    is_in_region = False
-            if is_in_region:
-                systems_in_region.append(self.systems[sys_id])
-        logger.debug(f"For region {extrema_dict} returning systems having params:")
-        for sys in systems_in_region:
-            logger.debug(sys.params_dict)
-        return systems_in_region
+    # def get_systems_in_region(self, extrema_dict):
+    #     systems_in_region = []
+    #     for sys_id in self.systems.keys():
+    #         is_in_region = True
+    #         params =self.systems[sys_id].params_dict
+    #         for par in extrema_dict.keys():
+    #             try:
+    #                 if params[par] < extrema_dict[par][0] or params[par] > extrema_dict[par][1]:
+    #                     is_in_region = False
+    #                     logger.debug(f"system excluded from region since {par}={params[par]} is not in {extrema_dict[par]}")
+    #             except KeyError as e:
+    #                 logger.warning(f"Parameter {par} was not found in {self.systems[sys_id]}\nRaised: {e}")
+    #                 is_in_region = False
+    #         if is_in_region:
+    #             systems_in_region.append(self.systems[sys_id])
+    #     logger.debug(f"For region {extrema_dict} returning systems having params:")
+    #     for sys in systems_in_region:
+    #         logger.debug(sys.params_dict)
+    #     return systems_in_region
 
 
     @classmethod
@@ -359,13 +360,16 @@ class LunchBox:
             logger.info("LunchBox: loading systems")
             lunchbox.systems = pickle.load(syst_file)
 
-        with open(f"{folder}/extractions.pkl", "rb") as extr_file:
-            logger.info("LunchBox: loading extractions")
-            lunchbox.extractions = pickle.load(extr_file)
-
         with open(f"{folder}/extractions_functions.pkl", "rb") as extrf_file:
             logger.info("LunchBox: loading extraction functions")
             lunchbox._extraction_functions = pickle.load(extrf_file)
+
+        try:
+            with open(f"{folder}/extractions.pkl", "rb") as extr_file:
+                logger.info("LunchBox: loading extractions")
+                lunchbox.extractions = pickle.load(extr_file)
+        except FileExistsError:
+            logger.warning("During creation of lunchbox from folder {folder}, file 'extractions.pkl' was not found.")
         
         return lunchbox
 
@@ -398,7 +402,6 @@ class PanHandler:
 
     def run(self):
         self._check_lunchboxes()
-
         self._run_time = perf_counter()
 
         logger.info(f"Starting {len(self.lunchboxes_dicts)} lunchboxes having:")
@@ -409,25 +412,73 @@ class PanHandler:
         for sd in self.system_dicts:
             logger.info(sd)
 
+        self._init_subruns()
 
+        counter = 0
+        all_done = False
+        while counter <= MAX_RUN_ATTEMPTS and not all_done:
+            counter +=1
+            logger.info(f"Run attempt: {counter}")
+            all_done = self._run_empty()
+
+        # Endind instructions
+        self._extract()
+        self._run_time = perf_counter() - self._run_time
+
+        logger.info(f"Whole PanHandler took {self._run_time:.1f} seconds")
+
+    def _init_subruns(self):
+        logger.info("Initializing lunchboxes folders")
+        for i, lbd in enumerate(self.lunchboxes_dicts):
+            
+            lbd['folder'] = os.path.join(self.folder, str(i))
+            os.mkdir(lbd['folder'])
+
+            with open(os.path.join(lbd['folder'], 'retry_file.pkl'), "wb") as retry_file:
+                    retry_dict = dict(build_func=self.build_function, 
+                                       lunchbox_dict=lbd, 
+                                       system_dicts=self.system_dicts, 
+                                       extractions=self._extraction_functions,
+                                       folder=self.folder,
+                                       subfolder=lbd['folder'])
+                    pickle.dump(retry_dict, retry_file)
+
+    def _run_empty(self):
+        logger.info("Running empty folders")
+        empty_run_folders = self._check_empty_runs()
+
+        if len(empty_run_folders) == 0:
+            logger.info("No empty folders found to run.")
+            return True
+        
         processes = []
-        for lbd in self.lunchboxes_dicts:
+        for empty_run_folder in empty_run_folders:
+            with open(os.path.join(self.folder, empty_run_folder, 'retry_file.pkl'), "rb") as retry_file:
+                creation_args = pickle.load(retry_file)
+
+            creation_args['subfolder'] = empty_run_folder
+
             p = mp.Process(target=self.__class__._create_lunchbox_run_and_save, 
-                                  args=(self.build_function, 
-                                        lbd, 
-                                        self.system_dicts,
-                                        self._extraction_functions,
-                                        self.folder))
+                                  kwargs=creation_args)
             processes.append(p)
             p.start()
         
         for p in processes:
             p.join()
+        
+        return False
+        
+    def _check_empty_runs(self):
+        subfolders = [subf for subf in os.listdir(self.folder) if os.path.isdir(os.path.join(self.folder, subf ))]
 
-        self._extract()
-        self._run_time = perf_counter() - self._run_time
+        subfolder_is_ok = dict()
+        for subfolder in subfolders:
+            subfolder_is_ok[subfolder] = os.path.exists(os.path.join(self.folder, subfolder, "extractions.pkl"))
 
-        logger.info(f"Whole PanHandler took {self._run_time:.1f} seconds")
+        if not np.all(np.array(list(subfolder_is_ok.values()))):
+            logger.warning(f"Bad-run check found valid folders:\n{subfolder_is_ok}")
+
+        return [key for key in subfolder_is_ok.keys() if not subfolder_is_ok[key]]
 
     def _check_lunchboxes(self):
         logger.info(f"Checking {len(self.lunchboxes_dicts)} lunchboxes...")
@@ -442,44 +493,45 @@ class PanHandler:
         if np.sum(is_duplicate) > 0:
             logger.warning(f"Found {np.sum(is_duplicate)} duplicate lunchboxes.\nConsider adding duplicate systems to optimize computing.")
 
-
     @classmethod
     def _create_lunchbox_run_and_save(cls, 
-                                        build_func, 
-                                        lunchbox_dict, 
-                                        system_dicts,
-                                        extractions, 
-                                        folder):
+                                        build_func=None, 
+                                        lunchbox_dict=None, 
+                                        system_dicts=None,
+                                        extractions=None, 
+                                        folder=None, subfolder=None):
         
         set_logger_pid(logger)
 
-        lunchbox_dict['folder'] = os.path.join(folder, str(os.getpid()))
+        localized_lunchbox_dict = lunchbox_dict.copy()
+        localized_lunchbox_dict['folder'] = os.path.join(folder, str(os.getpid())) if subfolder is None else os.path.join(folder, subfolder)
 
-        run_attempts = 0
-        while run_attempts < MAX_RUN_ATTEMPTS:
-            try:
-                # Try a reload of spynnaker
-                # because spalloc has timeouts
-                importlib.reload(pyNN.spiNNaker)
+        try:
+            # Try a reload of spynnaker
+            # because spalloc has timeouts
+            importlib.reload(pyNN.spiNNaker)
 
-                lb = LunchBox(**lunchbox_dict)
+            lb = LunchBox(**localized_lunchbox_dict)
 
-                for sys_dict in system_dicts:
-                    lb.add_system(System(build_func, sys_dict))
-                
-                for extr in extractions:
-                    lb.add_extraction(extr)
+            for sys_dict in system_dicts:
+                lb.add_system(System(build_func, sys_dict))
+            
+            for extr in extractions:
+                lb.add_extraction(extr)
 
-                lb.run()
-                lb.extract_and_save()
+            lb.run()
+            lb.extract_and_save()
 
-            except SpiNNManCoresNotInStateException:
-                get_sim().end() # Safety stop of simulator
-                logger.error(f"Not enough free cores. Trying again in {WAIT_TIME_S} seconds ({run_attempts}/{MAX_RUN_ATTEMPTS}).")
-                run_attempts += 1 
-                sleep(WAIT_TIME_S)
-            else:
-                break
+        except SpiNNManCoresNotInStateException:
+            logger.error(f"Not enough free cores. Execution queued.")
+            with open(os.path.join(localized_lunchbox_dict['folder'], 'retry_file.pkl'), "wb") as retry_file:
+                retry_dict = dict(build_func=build_func, 
+                                    lunchbox_dict=lunchbox_dict, 
+                                    system_dicts=system_dicts, 
+                                    extractions=extractions,
+                                    folder=folder)
+                pickle.dump(retry_dict, retry_file)
+            raise SpiNNManCoresNotInStateException("Not enough free cores.")
 
     def _extract(self):
         self.extractions = dict()
@@ -495,7 +547,7 @@ class PanHandler:
                     self.extractions[subf]['lunchbox_conf'] = pickle.load(f)
 
     def _clean_folder(self):
-        logger.info(f"CLeaning folder {self.folder}")
+        logger.info(f"Cleaning folder {self.folder}")
         for subfolder in os.listdir(self.folder):
             if not os.path.isdir(os.path.join(self.folder, subfolder)):
                 logger.debug(f"{subfolder} is not a subfolder. skipping.")
