@@ -174,8 +174,8 @@ if __name__ == '__main__':
                     # rng_seeds=[SEED],
                     neurons_per_core=250,
                     )
-    pops = build_system(default_system_params)
     sim_setup = {key:default_lunchbox_params[key] for key in ['timestep', 'min_delay', 'time_scale_factor']}
-    print(sim_setup)
     sim.setup(**sim_setup)
+    pops = build_system(default_system_params)
+    print(sim_setup)
     sim.run(default_lunchbox_params['duration'])
