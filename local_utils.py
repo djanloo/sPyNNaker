@@ -282,10 +282,11 @@ def spectral_stats(block, bin_size_ms = 1 , t_start=50, t_end = None):
     results = dict()
 
     # Spectral power mode
-    freqs = np.fft.fftfreq(n_bins, dt)
+    freqs = np.fft.fftfreq(n_bins, bin_size_ms*1e-3)
     fft = np.fft.fft(a_t)
-    results["spectral_mode"] = freqs[np.argmax(np.abs(fft))]
-    
+    results["A_t"] = array_to_string(a_t)
+    results["spectral_mode"] = freqs[np.argmax(np.abs(fft[:n_bins//2]))]
+    # results["frequencies"] = array_to_string(freqs[:n_bins//2])
     # Spectral entropy
     density = np.abs(fft[:n_bins//2])**2
     density /= np.sum(density)
