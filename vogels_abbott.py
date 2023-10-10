@@ -156,3 +156,26 @@ def build_system(system_params):
     
     logger.info(f"Thalamic stimulus Done")
     return pops
+
+if __name__ == '__main__':
+    sim = get_sim()
+
+    default_system_params = dict(n_neurons=200, 
+            exc_conn_p=0.03, 
+            inh_conn_p=0.02,
+            synaptic_delay=2
+            )
+    
+    default_lunchbox_params = dict(
+                    timestep=0.1, 
+                    time_scale_factor=50, # Defines the lunchbox where the systems will be runned on
+                    duration=1000, 
+                    min_delay=2,
+                    # rng_seeds=[SEED],
+                    neurons_per_core=250,
+                    )
+    pops = build_system(default_system_params)
+    sim_setup = {key:default_lunchbox_params[key] for key in ['timestep', 'min_delay', 'time_scale_factor']}
+    print(sim_setup)
+    sim.setup(**sim_setup)
+    sim.run(default_lunchbox_params['duration'])
