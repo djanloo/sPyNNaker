@@ -100,6 +100,11 @@ def num(s):
     except ValueError:
         return float(s)
     
+def array_to_string(array):
+    return ','.join([f"{val:.3}" for val in array])
+
+def string_to_array(string):
+    return np.array([num(val) for val in string.split(',') if val != ''])
 
 def activity_stats(block, n_spikes=10, t_start=50, t_end=None):
     spike_train_list = block.segments[0].spiketrains
@@ -285,5 +290,5 @@ def spectral_stats(block, bin_size_ms = 1 , t_start=50, t_end = None):
     density = np.abs(fft[:n_bins//2])**2
     density /= np.sum(density)
     results["spectral_entropy"] = -np.sum(density*np.log(density))
-
+    results['PSD'] = array_to_string(density)
     return results
