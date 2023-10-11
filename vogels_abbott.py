@@ -56,7 +56,7 @@ def build_system(system_params):
     r_ei = 4.0
     n_exc = int(round((system_params['n_neurons'] * r_ei / (1 + r_ei))))
     n_inh = system_params['n_neurons'] - n_exc
-    logger.info(f"Sub-network has {n_exc} (type {type(n_exc)}) excitatory neurons and {n_inh} (type {type(n_inh)}) inhibitory neurons")
+    logger.info(f"Sub-network has {n_exc} (type {type(n_exc)}) excitatory neurons and {n_inh} inhibitory neurons")
 
     pops[f'exc'] = sim.Population(
                                     n_exc, 
@@ -66,16 +66,9 @@ def build_system(system_params):
                                     n_inh, 
                                     CELLTYPE(**CELL_PARAMS), 
                                     label=f"inh_cells")
-    # try:
-    #     pops['exc'].set(seed=RNGSEED)
-    #     pops['inh'].set(seed=RNGSEED)
-    # except Exception as e:
-    #     logger.warn(f"Exception raised when setting the seed of populations: {e}")
 
     pops[f'exc'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
     pops[f'inh'].record(["spikes", 'v', 'gsyn_exc', 'gsyn_inh'])
-    # pops[f'exc'].record(["spikes", 'v'])
-    # pops[f'inh'].record(["spikes", 'v'])
 
     uniformDistr = RandomDistribution('uniform', 
                                     [CELL_PARAMS["v_reset"], CELL_PARAMS["v_thresh"]], 
@@ -96,7 +89,7 @@ def build_system(system_params):
     inh_conn = sim.FixedProbabilityConnector(system_params['inh_conn_p'],
                                             #  rng=rng # this raises ConfigurationException
                                             )
-    logger.info(f"Initialized [blue]inhibitory[/blue] FixedProbabilityConnector with p = {system_params['exc_conn_p']:.3}", extra=dict(markup=True))
+    logger.info(f"Initialized [blue]inhibitory[/blue] FixedProbabilityConnector with p = {system_params['inh_conn_p']:.3}", extra=dict(markup=True))
 
     connections = dict(
         
@@ -158,24 +151,33 @@ def build_system(system_params):
     return pops
 
 if __name__ == '__main__':
+    """For test purposes, call python vogels-abbot.py to run a default 500-neurons network"""
     sim = get_sim()
 
-    default_system_params = dict(n_neurons=200, 
-            exc_conn_p=0.03, 
-            inh_conn_p=0.02,
-            synaptic_delay=2
-            )
+    network_params = dict(  n_neurons=500, 
+                            exc_conn_p=0.02, 
+                            inh_conn_p=0.02,
+                            synaptic_delay=2
+                            )
     
-    default_lunchbox_params = dict(
-                    timestep=0.1, 
-                    time_scale_factor=50, # Defines the lunchbox where the systems will be runned on
-                    duration=1000, 
-                    min_delay=2,
-                    # rng_seeds=[SEED],
-                    neurons_per_core=250,
+    timestep = 0.1 #ms
+    min_delay = 1.0 #ms 
+    duration = 500 #ms
+    
+    sim_params = dict(
+                    timestep=timestep, 
+                    time_scale_factor=50, 
+                    duration=round(duration/timestep)*timestep, # Set to closest multiple of dt
+                    min_delay= round(min_delay/timestep)*timestep, # Set to closest multiple of dt
+                    neurons_per_core=250
                     )
-    sim_setup = {key:default_lunchbox_params[key] for key in ['timestep', 'min_delay', 'time_scale_factor']}
-    sim.setup(**sim_setup)
-    pops = build_system(default_system_params)
-    print(sim_setup)
-    sim.run(default_lunchbox_params['duration'])
+    
+    sim_setup_pars = {key:sim_params[key] for key in ['timestep', 'min_delay', 'time_scale_factor']}
+    
+    sim.setup(**sim_setup_pars)
+    sim.set_number_of_neurons_per_core(sim.IF_cond_exp, sim_params['neurons_per_core'])
+    
+    populations = build_system(network_params)
+    print(sim_setup_pars)
+    
+    sim.run(sim_params['duration'])
